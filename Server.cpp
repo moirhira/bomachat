@@ -28,7 +28,6 @@ int Server::init() {
         perror("listen faild: ");
         return 1;
     }
-    run();
     return 0;
 }
 
