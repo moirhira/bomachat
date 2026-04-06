@@ -52,7 +52,6 @@ void Server::run() {
             {
                 if (_fds[i].fd == _sockfd)
                 {
-                    printf("new client connected\n");
                     acceptClient();
                 }
                 else
@@ -73,9 +72,17 @@ void Server::acceptClient() {
         perror("accept faild: ");
         return;
     }
+    if (_nfds >= 1024)
+    {
+        std::cerr << "Too many clients!" << std::endl;
+        close(client_fd);
+        return;
+    }
+    _clients.push_back(Client(client_fd));
     _fds[_nfds].fd = client_fd;
     _fds[_nfds].events = POLLIN;
     _nfds++;
+    std::cout << "new client connected" << std::endl;
 }
 
 
