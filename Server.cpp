@@ -99,6 +99,6 @@ void Server::handelClient(int& i) {
     else
     {
         buffer[byts] = '\0';
-        std::cout << "client snet this : " << buffer << std::endl;
+        std::cout << "client sent this : " << buffer << std::endl;
     }
 }
