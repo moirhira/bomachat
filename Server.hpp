@@ -5,7 +5,11 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <poll.h>
-#include <strings>
+#include <string>
+#include <unistd.h>
+#include <iostream>
+#include <cstdio>
+#include <cstdlib>
 
 class Server {
     private:
@@ -22,7 +26,7 @@ class Server {
         int init();
         void run();
         void acceptClient();
-        void handelClient(int i);
+        void handelClient(int& i);
 };
 
 #endif

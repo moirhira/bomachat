@@ -32,10 +32,10 @@ int Server::init() {
 }
 
 void Server::run() { 
-
+    memset(_fds, 0, sizeof(_fds));
     _fds[0].fd = _sockfd;
     _fds[0].events = POLLIN;
-    int _nfds = 1;
+    _nfds = 1;
 
     while (1)
     {
@@ -46,6 +46,7 @@ void Server::run() {
             {
                 if (_fds[i].fd == _sockfd)
                 {
+                    printf("new client connected\n");
                     acceptClient();
                 }
                 else
@@ -57,14 +58,17 @@ void Server::run() {
     }
 
 }
+
+
 void Server::acceptClient() {
     int client_fd = accept(_sockfd, NULL, NULL);
     _fds[_nfds].fd = client_fd;
     _fds[_nfds].events = POLLIN;
     _nfds++;
 }
-void Server::handelClient(int i) {
-{
+
+
+void Server::handelClient(int& i) {
     char buffer[1024];
     int byts = recv(_fds[i].fd, buffer, sizeof(buffer) - 1, 0);
     if (byts <= 0)
