@@ -7,6 +7,8 @@ Server::~Server() {}
 
 int Server::init() {
     _sockfd = socket(AF_INET, SOCK_STREAM, 0);
+    int opt = 1;
+    setsockopt(_sockfd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
     if (_sockfd < 0)
     {
         perror("socket fail: ");
@@ -39,7 +41,11 @@ void Server::run() {
 
     while (1)
     {
-        poll(_fds, _nfds, -1);
+        if (poll(_fds, _nfds, -1) < 0)
+        {
+            perror("poll faild: ");
+            return ;
+        }
         for (int i = 0; i < _nfds; i++)
         {
             if (_fds[i].revents & POLLIN)
@@ -62,6 +68,11 @@ void Server::run() {
 
 void Server::acceptClient() {
     int client_fd = accept(_sockfd, NULL, NULL);
+    if (client_fd < 0)
+    {
+        perror("accept faild: ");
+        return;
+    }
     _fds[_nfds].fd = client_fd;
     _fds[_nfds].events = POLLIN;
     _nfds++;
