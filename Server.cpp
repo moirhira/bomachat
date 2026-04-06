@@ -34,26 +34,24 @@ int Server::init() {
 
 void Server::run() { 
 
-    struct pollfd fds[1024];
-    fds[0].fd = _sockfd;
-    fds[0].events = POLLIN;
-    int nfds = 1;
+    _fds[0].fd = _sockfd;
+    _fds[0].events = POLLIN;
+    int _nfds = 1;
 
     while (1)
     {
-        poll(fds, nfds, -1);
-
-        for (int i = 0; i < nfds, i++)
+        poll(_fds, _nfds, -1);
+        for (int i = 0; i < _nfds; i++)
         {
-            if (fds[i].revents & POLLIN)
+            if (_fds[i].revents & POLLIN)
             {
-                if (fds[i].fd == _sockfd)
+                if (_fds[i].fd == _sockfd)
                 {
                     acceptClient();
                 }
                 else
                 {
-                    handelClient();
+                    handelClient(i);
                 }
             }
         }
@@ -61,25 +59,25 @@ void Server::run() {
 
 }
 void Server::acceptClient() {
-    int client_fd = accept(sockfd, NULL, NULL);
-    fds[nfds].fd = client_fd;
-    fds[nfds].events = POLLIN;
-    nfds++;
+    int client_fd = accept(_sockfd, NULL, NULL);
+    _fds[_nfds].fd = client_fd;
+    _fds[_nfds].events = POLLIN;
+    _nfds++;
 }
-void Server::handelClient() {
+void Server::handelClient(int i) {
 {
     char buffer[1024];
-    int byts = recv(fds[nfds].fd, buffer, sizeof(buffer) - 1, 0);
+    int byts = recv(_fds[i].fd, buffer, sizeof(buffer) - 1, 0);
     if (byts <= 0)
     {
-        close(fds[nfds]);
-        fds[i] = fds[nfds - 1];
-        nfds--;
+        close(_fds[i].fd);
+        _fds[i] = _fds[_nfds - 1];
+        _nfds--;
         i--;
     }
     else
     {
-        
-
+        buffer[byts] = '\0';
+        std::cout << "client snet this : " << buffer << std::endl;
     }
 }

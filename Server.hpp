@@ -10,9 +10,11 @@
 class Server {
     private:
         int _sockfd;
-        std::vector<Client> *_clients;
+        // std::vector<Client> _clients;
         int _port;
         std::string _password;
+        struct pollfd _fds[1024];
+        int _nfds;
     public:
         Server(int port, std::string password);
         ~Server();
@@ -20,7 +22,7 @@ class Server {
         int init();
         void run();
         void acceptClient();
-        void handelClient();
+        void handelClient(int i);
 };
 
 #endif
