@@ -12,6 +12,13 @@
 #include <cstdlib>
 #include "Client.hpp"
 
+struct command
+{
+    std::string command;
+    std::vector<std::string> params;
+};
+
+
 class Server {
     private:
         int _sockfd;
@@ -30,7 +37,7 @@ class Server {
         void handelClient(int& i);
 
         Client* getClientById(int id);
-        void parseCommand(std::string cmdLine, Client* client);
+        command parseCommand(std::string cmdLine, Client* client);
 };
 
 #endif

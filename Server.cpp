@@ -95,9 +95,30 @@ void Server::acceptClient() {
 }
 
 
-void Server::parseCommand(std::string cmdLine, Client* client)
+command Server::parseCommand(std::string cmdLine, Client* client)
 {
-    printf("line : %s\n", cmdLine.c_str());
+    command cmdStruct;
+    if (cmdLine.empty())
+        return cmdStruct;
+    size_t start = cmdLine.find_first_not_of(" \t\n\r");
+    if (start == std::string::npos)
+        return cmdStruct;
+    std::string trimmedCmd = cmdLine.substr(start);
+    if (trimmedCmd[0] == ':')
+    {
+        if (trimmedCmd[1] == ' ')
+        {
+            cmdStruct.command = trimmedCmd.substr(2);
+            cmdStruct.params.clear();
+            return cmdStruct;
+        }
+    }
+    else
+    {
+        
+    }
+
+    return cmdStruct;
 }
 
 void Server::handelClient(int& i) {
