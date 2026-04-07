@@ -30,6 +30,7 @@ class Server {
         void handelClient(int& i);
 
         Client* getClientById(int id);
+        void parseCommand(std::string cmdLine);
 };
 
 #endif

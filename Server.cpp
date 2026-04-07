@@ -95,6 +95,11 @@ void Server::acceptClient() {
 }
 
 
+void Server::parseCommand(std::string cmdLine)
+{
+
+}
+
 void Server::handelClient(int& i) {
     char buffer[1024];
     int byts = recv(_fds[i].fd, buffer, sizeof(buffer) - 1, 0);
@@ -108,10 +113,15 @@ void Server::handelClient(int& i) {
     else
     {
         buffer[byts] = '\0';
-        Client* cl = getClientById(_fds[i].fd);
+        Client* curClient = getClientById(_fds[i].fd);
         buffer[byts] = '\0';
-        cl->appendToBuffer(buffer);
+        curClient->appendToBuffer(buffer);
         std::cout << "client sent this : " << buffer << std::endl;
+        if (curClient->getBuffer().find("\r\n") != std::string::npos)
+        {
+            parseCommand(curClient->getBuffer());
+            curClient->clearBuffer();
+        }
     }
-    printf("buffer now -> %s\n", getClientById(_fds[i].fd)->getBuffer().c_str());
+    // printf("buffer now -> %s\n", getClientById(_fds[i].fd)->getBuffer().c_str());
 }
