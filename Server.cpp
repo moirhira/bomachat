@@ -95,9 +95,9 @@ void Server::acceptClient() {
 }
 
 
-void Server::parseCommand(std::string cmdLine)
+void Server::parseCommand(std::string cmdLine, Client* client)
 {
-
+    printf("line : %s\n", cmdLine.c_str());
 }
 
 void Server::handelClient(int& i) {
@@ -105,22 +105,34 @@ void Server::handelClient(int& i) {
     int byts = recv(_fds[i].fd, buffer, sizeof(buffer) - 1, 0);
     if (byts <= 0)
     {
-        close(_fds[i].fd);
+        int fd = _fds[i].fd;
+        close(fd);
         _fds[i] = _fds[_nfds - 1];
         _nfds--;
         i--;
+        for (int j = 0; j < _clients.size(); j++)
+        {
+            if (_clients[j].getFd() == fd)            {
+                _clients.erase(_clients.begin() + j);
+                break;
+            }
+        }
+        std::cout << "client disconnected" << std::endl;
     }
     else
     {
         buffer[byts] = '\0';
         Client* curClient = getClientById(_fds[i].fd);
-        buffer[byts] = '\0';
+        if (!curClient)
+            return;
         curClient->appendToBuffer(buffer);
-        std::cout << "client sent this : " << buffer << std::endl;
-        if (curClient->getBuffer().find("\r\n") != std::string::npos)
+        std::string& cmdLine = curClient->getBuffer();
+        size_t pos;
+        while ((pos = cmdLine.find("\r\n")) != std::string::npos)
         {
-            parseCommand(curClient->getBuffer());
-            curClient->clearBuffer();
+            std::string line = cmdLine.substr(0, pos);
+            cmdLine.erase(0, pos + 2);
+            parseCommand(line, curClient);
         }
     }
     // printf("buffer now -> %s\n", getClientById(_fds[i].fd)->getBuffer().c_str());

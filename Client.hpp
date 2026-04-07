@@ -23,7 +23,7 @@ class Client {
         std::string getRealname() const;
         bool isAuth();
         bool isReg();
-        std::string getBuffer() const;
+        std::string& getBuffer() const;
 
 
         void setNickname(std::string nickname);
