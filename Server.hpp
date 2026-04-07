@@ -28,6 +28,8 @@ class Server {
         void run();
         void acceptClient();
         void handelClient(int& i);
+
+        Client* getClientById(int id);
 };
 
 #endif

@@ -65,6 +65,15 @@ void Server::run() {
 }
 
 
+Client* Server::getClientById(int id) {
+    for (int i = 0 ; i < _clients.size(); i++)
+    {
+        if (_clients[i].getFd() == id)
+            return &_clients[i];
+    }
+    return NULL;
+}
+
 void Server::acceptClient() {
     int client_fd = accept(_sockfd, NULL, NULL);
     if (client_fd < 0)
@@ -99,6 +108,10 @@ void Server::handelClient(int& i) {
     else
     {
         buffer[byts] = '\0';
+        Client* cl = getClientById(_fds[i].fd);
+        buffer[byts] = '\0';
+        cl->appendToBuffer(buffer);
         std::cout << "client sent this : " << buffer << std::endl;
     }
+    printf("buffer now -> %s\n", getClientById(_fds[i].fd)->getBuffer().c_str());
 }

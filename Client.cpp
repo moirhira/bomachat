@@ -6,7 +6,7 @@ Client::Client(int fd) : _fd(fd), _authenticated(false), _registred(false)
 
 Client::~Client() {}
 
-int Client::getFd const() {
+int Client::getFd() const {
     return _fd;
 }
 
