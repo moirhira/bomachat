@@ -95,7 +95,7 @@ void Server::acceptClient() {
 }
 
 
-command Server::parseCommand(std::string cmdLine, Client* client)
+command Server::parseCommand(std::string cmdLine)
 {
     command cmdStruct;
 
@@ -147,6 +147,58 @@ command Server::parseCommand(std::string cmdLine, Client* client)
     return cmdStruct;
 }
 
+
+void handlePass(Client* client, std::vector<std::string> params) {
+
+}
+
+void handleNick(Client* client, std::vector<std::string> params) {
+    
+}
+
+void handleUser(Client* client, std::vector<std::string> params) {
+    
+}
+void handleJoin(Client* client, std::vector<std::string> params) {
+    
+}
+void handlePrivmsg(Client* client, std::vector<std::string> params) {
+    
+}
+
+void handleKick(Client* client, std::vector<std::string> params) {
+    
+}
+
+void handleInvite(Client* client, std::vector<std::string> params) {
+    
+}
+
+void handleTopic(Client* client, std::vector<std::string> params) {
+    
+}
+void handleMode(Client* client, std::vector<std::string> params) {
+    
+}
+
+void Server::handelCommand(command cmd, Client* client){ 
+    if (cmd.command == "PASS")
+        handlePass(client, cmd.params);
+    else if (cmd.command == "USER")
+        handleUser(client, cmd.params);
+    else if (cmd.command == "JOIN")
+        handleJoin(client, cmd.params);
+    else if (cmd.command == "PRIVMSG")
+        handlePrivmsg(client, cmd.params);
+    else if (cmd.command == "KICK")
+        handleKick(client, cmd.params);
+    else if (cmd.command == "INVITE")
+        handleInvite(client, cmd.params);
+    else if (cmd.command == "TOPIC")
+        handleTopic(client, cmd.params);
+    else if (cmd.command == "MODE")
+        handleMode(client, cmd.params);
+}
 void Server::handelClient(int& i) {
     char buffer[1024];
     int byts = recv(_fds[i].fd, buffer, sizeof(buffer) - 1, 0);
@@ -179,7 +231,8 @@ void Server::handelClient(int& i) {
         {
             std::string line = cmdLine.substr(0, pos);
             cmdLine.erase(0, pos + 2);
-            
+            command cmd = parseCommand(line);
+            handelCommand(cmd, curClient);
         }
     }
     // printf("buffer now -> %s\n", getClientById(_fds[i].fd)->getBuffer().c_str());

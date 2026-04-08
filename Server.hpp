@@ -37,7 +37,8 @@ class Server {
         void handelClient(int& i);
 
         Client* getClientById(int id);
-        command parseCommand(std::string cmdLine, Client* client);
+        command parseCommand(std::string cmdLine);
+        void handelCommand(command cmd, Client* client);
 };
 
 #endif
