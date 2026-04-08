@@ -148,8 +148,23 @@ command Server::parseCommand(std::string cmdLine)
 }
 
 
-void handlePass(Client* client, std::vector<std::string> params) {
-
+void handlePass(Client* client, std::vector<std::string> params, std::string password) {
+    if (params.size() < 1)
+    {
+        std::cerr << "Not enough params !" << std::endl;
+        return;
+    }
+    if(!client->isAuth())
+    {
+        std::cerr << "You are already registred !" << std::endl;
+        return;
+    }
+    if (password != params[0])
+    {
+        std::cerr << "Worong password !" << std::endl;
+        return;
+    }
+    client->setAuthenticated(true);
 }
 
 void handleNick(Client* client, std::vector<std::string> params) {
@@ -183,7 +198,7 @@ void handleMode(Client* client, std::vector<std::string> params) {
 
 void Server::handelCommand(command cmd, Client* client){ 
     if (cmd.command == "PASS")
-        handlePass(client, cmd.params);
+        handlePass(client, cmd.params, _password);
     else if (cmd.command == "USER")
         handleUser(client, cmd.params);
     else if (cmd.command == "JOIN")
