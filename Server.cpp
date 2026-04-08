@@ -147,21 +147,30 @@ command Server::parseCommand(std::string cmdLine)
     return cmdStruct;
 }
 
+void sendReply(Client* client, int errorCode, std::string errorMsg, std::string cmd) {
+    std::string reply = ":server " + std::to_string(errorCode) + " " 
+                            + client->getNickname()
+                            + " " 
+                            + cmd
+                            + " :" + errorMsg + "\r\n";
+        send(client->getFd(), reply.c_str(),reply.size(), 0);
+}
+
 
 void handlePass(Client* client, std::vector<std::string> params, std::string password) {
     if (params.size() < 1)
     {
-        std::cerr << "Not enough params !" << std::endl;
+        sendReply(client, 461, "Not enough parameters", "PASS");
         return;
     }
     if(!client->isAuth())
     {
-        std::cerr << "You are already registred !" << std::endl;
+        sendReply(client, 462, "You are already registred!", "PASS");
         return;
     }
     if (password != params[0])
     {
-        std::cerr << "Worong password !" << std::endl;
+        sendReply(client, 464, "Worong password!", "PASS");
         return;
     }
     client->setAuthenticated(true);
@@ -169,6 +178,8 @@ void handlePass(Client* client, std::vector<std::string> params, std::string pas
 
 void handleNick(Client* client, std::vector<std::string> params) {
     
+
+
 }
 
 void handleUser(Client* client, std::vector<std::string> params) {
