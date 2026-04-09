@@ -177,7 +177,16 @@ void handlePass(Client* client, std::vector<std::string> params, std::string pas
 }
 
 void handleNick(Client* client, std::vector<std::string> params) {
-    
+    if (!client->isAuth())
+    {
+        sendReply(client, 462, "You have not registered", "NICK");
+        return;
+    }
+    if (params.size() < 1)
+    {
+        sendReply(client, 431, "No nickname given", "NICK");
+        return;
+    }
 
 
 }
