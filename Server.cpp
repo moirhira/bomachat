@@ -163,7 +163,7 @@ void handlePass(Client* client, std::vector<std::string> params, std::string pas
         sendReply(client, 461, "Not enough parameters", "PASS");
         return;
     }
-    if(!client->isAuth())
+    if(client->isAuth())
     {
         sendReply(client, 462, "You are already registred!", "PASS");
         return;
@@ -176,19 +176,47 @@ void handlePass(Client* client, std::vector<std::string> params, std::string pas
     client->setAuthenticated(true);
 }
 
-void handleNick(Client* client, std::vector<std::string> params) {
-    if (!client->isAuth())
-    {
-        sendReply(client, 462, "You have not registered", "NICK");
-        return;
-    }
+void handleNick(Client* client, std::vector<std::string>& params, std::vector<Client>& clients) {
     if (params.size() < 1)
     {
         sendReply(client, 431, "No nickname given", "NICK");
         return;
     }
-
-
+    if (!client->isAuth())
+    {
+        sendReply(client, 462, "You have not registered", "NICK");
+        return;
+    }
+    std::string newNick = params[0];
+    if (isdigit(newNick[0]) || newNick[0] == '-')
+    {
+        sendReply(client, 432, "Nickname cannot start with \"-\" or Number", "NICK");
+        return;
+    }
+    for (int i = 0; i < newNick.size(); i++)
+    {
+        if (!isalnum(newNick[i]) && newNick[i] != '-' && newNick[i] != '_' 
+            && newNick[i] != '[' && newNick[i] != ']' && newNick[i] != '\\' 
+            && newNick[i] != '^' && newNick[i] != '{' && newNick[i] != '}' && newNick[i] != '|')
+        {
+            sendReply(client, 432, "Nickname can only contain letters, digits, and - _ ' [ ] \\ ^ { } |", "NICK");
+            return;
+        }
+    }
+    for (int j = 0; j < clients.size(); j++)
+    {
+        if (clients[j].getNickname() == newNick)
+        {
+            sendReply(client, 433, "nickname already taken by another client", "NICK");
+            return;
+        }
+    }
+    client->setNickname(newNick);
+    if (client->isReg())
+    {
+        std::string msg = "Welcome to the server\r\n";
+        send(client->getFd(), msg.c_str(), msg.size(), 0);
+    }
 }
 
 void handleUser(Client* client, std::vector<std::string> params) {
@@ -219,6 +247,8 @@ void handleMode(Client* client, std::vector<std::string> params) {
 void Server::handelCommand(command cmd, Client* client){ 
     if (cmd.command == "PASS")
         handlePass(client, cmd.params, _password);
+    else if (cmd.command == "NICK")
+        handleNick(client, cmd.params, _clients);
     else if (cmd.command == "USER")
         handleUser(client, cmd.params);
     else if (cmd.command == "JOIN")
