@@ -147,13 +147,15 @@ command Server::parseCommand(std::string cmdLine)
     return cmdStruct;
 }
 
-void sendReply(Client* client, int errorCode, std::string errorMsg, std::string cmd) {
-    std::string reply = ":server " + std::to_string(errorCode) + " " 
-                            + client->getNickname()
-                            + " " 
-                            + cmd
-                            + " :" + errorMsg + "\r\n";
-        send(client->getFd(), reply.c_str(),reply.size(), 0);
+void sendReply(Client* client, int errorCode, std::string errorMsg, std::string cmd)
+{
+    std::string nick = client->getNickname().empty() ? "*" : client->getNickname();
+    std::ostringstream oss;
+    oss << std::setw(3) << std::setfill('0') << errorCode;
+    std::string reply = ":server " + oss.str() + " " 
+                            + nick + " " 
+                            + cmd + " :" + errorMsg + "\r\n";
+    send(client->getFd(), reply.c_str(),reply.size(), 0);
 }
 
 
@@ -176,6 +178,13 @@ void handlePass(Client* client, std::vector<std::string> params, std::string pas
     client->setAuthenticated(true);
 }
 
+void sendWelcome(Client* client) {
+    sendReply(client, 001, "Welcome to the IRC server " + client->getNickname(), "");
+    sendReply(client, 002, "Your host is ircserv", "");
+    sendReply(client, 003, "This server was created today", "");
+    sendReply(client, 004, "ircserv", "");
+}
+
 void handleNick(Client* client, std::vector<std::string>& params, std::vector<Client>& clients) {
     if (params.size() < 1)
     {
@@ -184,7 +193,7 @@ void handleNick(Client* client, std::vector<std::string>& params, std::vector<Cl
     }
     if (!client->isAuth())
     {
-        sendReply(client, 462, "You have not registered", "NICK");
+        sendReply(client, 451, "You have not registered", "NICK");
         return;
     }
     std::string newNick = params[0];
@@ -193,7 +202,7 @@ void handleNick(Client* client, std::vector<std::string>& params, std::vector<Cl
         sendReply(client, 432, "Nickname cannot start with \"-\" or Number", "NICK");
         return;
     }
-    for (int i = 0; i < newNick.size(); i++)
+    for (size_t i = 0; i < newNick.size(); i++)
     {
         if (!isalnum(newNick[i]) && newNick[i] != '-' && newNick[i] != '_' 
             && newNick[i] != '[' && newNick[i] != ']' && newNick[i] != '\\' 
@@ -203,24 +212,45 @@ void handleNick(Client* client, std::vector<std::string>& params, std::vector<Cl
             return;
         }
     }
-    for (int j = 0; j < clients.size(); j++)
+    for (size_t j = 0; j < clients.size(); j++)
     {
-        if (clients[j].getNickname() == newNick)
+        if (clients[j].getFd() != client->getFd() && clients[j].getNickname() == newNick)
         {
             sendReply(client, 433, "nickname already taken by another client", "NICK");
             return;
         }
     }
     client->setNickname(newNick);
+    if(!client->getUsername().empty())
+         client->setRegistered(true);
     if (client->isReg())
-    {
-        std::string msg = "Welcome to the server\r\n";
-        send(client->getFd(), msg.c_str(), msg.size(), 0);
-    }
+        sendWelcome(client);
 }
 
-void handleUser(Client* client, std::vector<std::string> params) {
-    
+void handleUser(Client* client, const std::vector<std::string> params) {
+    if(!client->isAuth())
+    {
+        sendReply(client, 451, "You have not registered", "USER");
+        return;
+    }
+    if (client->isReg())
+    {
+        sendReply(client, 462, "You are already registred!", "USER");
+        return;
+    }
+    if (params.size() < 4)
+    {
+        sendReply(client, 461, "Not enough parameters", "USER");
+        return;
+    }
+    client->setUsername(params[0]);
+    client->setRealname(params[3]);
+    if (!client->getNickname().empty())
+    {
+        client->setRegistered(true);
+    }
+    if(client->isReg())
+        sendWelcome(client);
 }
 void handleJoin(Client* client, std::vector<std::string> params) {
     
@@ -263,6 +293,17 @@ void Server::handelCommand(command cmd, Client* client){
         handleTopic(client, cmd.params);
     else if (cmd.command == "MODE")
         handleMode(client, cmd.params);
+    else if (cmd.command == "CAP")
+    {
+        std::string sub = cmd.params[0];
+
+        if (sub == "LS")
+        {
+            std::string reply = "CAP * LS :\r\n";
+            send(client->getFd(), reply.c_str(), reply.size(), 0);
+        }
+        return;
+    }
 }
 void Server::handelClient(int& i) {
     char buffer[1024];
@@ -296,6 +337,7 @@ void Server::handelClient(int& i) {
         {
             std::string line = cmdLine.substr(0, pos);
             cmdLine.erase(0, pos + 2);
+            std::cout << "RAW: [" << line << "]" << std::endl;
             command cmd = parseCommand(line);
             handelCommand(cmd, curClient);
         }

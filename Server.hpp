@@ -11,6 +11,8 @@
 #include <cstdio>
 #include <cstdlib>
 #include "Client.hpp"
+#include <sstream>
+#include <iomanip>
 
 struct command
 {
