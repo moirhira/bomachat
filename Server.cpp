@@ -3,6 +3,11 @@
 Server::Server(int port, std::string password) : _port(port), _password(password) {}
 Server::~Server() {}
 
+static bool isPreRegistrationCommand(const std::string& cmd)
+{
+    return (cmd == "PASS" || cmd == "NICK" || cmd == "USER" || cmd == "CAP");
+}
+
 
 
 int Server::init() {
@@ -275,7 +280,34 @@ void handleMode(Client* client, std::vector<std::string> params) {
 }
 
 void Server::handelCommand(command cmd, Client* client){ 
-    if (cmd.command == "PASS")
+
+    if (cmd.command.empty())
+        return;
+
+    if (!client->isReg() && !isPreRegistrationCommand(cmd.command))
+    {
+        sendReply(client, 451, "You have not registered", cmd.command);
+        return;
+    }
+
+    if (cmd.command == "CAP")
+    {
+        if (cmd.params.empty())
+            return;
+        std::string sub = cmd.params[0];
+        if (sub == "LS")
+        {
+            std::string reply = ":server CAP * LS :\r\n";
+            send(client->getFd(), reply.c_str(), reply.size(), 0);
+        }
+        else if (sub == "REQ" && cmd.params.size() > 1)
+        {
+            std::string reply = ":server CAP * NAK :" + cmd.params[1] + "\r\n";
+            send(client->getFd(), reply.c_str(), reply.size(), 0);
+        }
+        // CAP END → ignore silently
+    }
+    else if (cmd.command == "PASS")
         handlePass(client, cmd.params, _password);
     else if (cmd.command == "NICK")
         handleNick(client, cmd.params, _clients);
@@ -293,17 +325,6 @@ void Server::handelCommand(command cmd, Client* client){
         handleTopic(client, cmd.params);
     else if (cmd.command == "MODE")
         handleMode(client, cmd.params);
-    else if (cmd.command == "CAP")
-    {
-        std::string sub = cmd.params[0];
-
-        if (sub == "LS")
-        {
-            std::string reply = "CAP * LS :\r\n";
-            send(client->getFd(), reply.c_str(), reply.size(), 0);
-        }
-        return;
-    }
 }
 void Server::handelClient(int& i) {
     char buffer[1024];
@@ -333,11 +354,12 @@ void Server::handelClient(int& i) {
         curClient->appendToBuffer(buffer);
         std::string& cmdLine = curClient->getBuffer();
         size_t pos;
-        while ((pos = cmdLine.find("\r\n")) != std::string::npos)
+        while ((pos = cmdLine.find('\n')) != std::string::npos)
         {
             std::string line = cmdLine.substr(0, pos);
-            cmdLine.erase(0, pos + 2);
-            std::cout << "RAW: [" << line << "]" << std::endl;
+            cmdLine.erase(0, pos + 1);
+            if (!line.empty() && line[line.size() - 1] == '\r')
+                line.erase(line.size() - 1);
             command cmd = parseCommand(line);
             handelCommand(cmd, curClient);
         }
