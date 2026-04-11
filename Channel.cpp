@@ -5,6 +5,7 @@ Channel::Channel(std::string& name,  Client* client)
     : _name(name) , _usrLimit(0) , _inviteOnly(false), _topicRestricted(false)
 {
     _operators.push_back(client);
+    addMember(client);
 }
 Channel::~Channel() {};
 
@@ -21,6 +22,10 @@ std::string Channel::getName() const {
 
 std::string Channel::getPass() const {
     return _pass;
+}
+
+std::vector<Client*> Channel::getMembers() const {
+    return _members;
 }
 
 void Channel::setPass(std::string pass) {

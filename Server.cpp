@@ -259,31 +259,60 @@ void handleUser(Client* client, const std::vector<std::string> params) {
 }
 
 
+
+
 void handleJoin(Client* client, std::vector<std::string> params, std::vector<Channel>& channels) {
-    if (params.size() < 2)
+    if (params.size() < 1)
     {
         sendReply(client, 461, "Not enough parameters", "JOIN");
         return;
     }
      if(!client->isReg())
     {
-        sendReply(client, 451, "You have not registered", "USER");
+        sendReply(client, 451, "You have not registered", "JOIN");
         return;
     }
     if (params[0][0] != '#')
     {
-        sendReply(client, 433, "Channel name should start with #", "USER");
+        sendReply(client, 476, "Channel name should start with #", "JOIN");
         return;
     }
     for (size_t i = 0; i < channels.size(); i++)
     {
         if (params[0] == channels[i].getName())
         {
-
+            if (channels[i].isInviteOnly() && !channels[i].isInvited(client))
+            {
+                sendReply(client, 473, "You are not invited to this channel", "JOIN");
+                return;
+            }
+            if (!channels[i].getPass().empty())
+            {
+                std::string pswd;
+                if (params.size() > 1)
+                    pswd = params[1];
+                else
+                    pswd = "";
+                if (channels[i].getPass() != pswd)
+                {
+                    sendReply(client, 475, "Invalid channel password", "JOIN");
+                    return;
+                }
+            }
+            if (channels[i].getUserlimit() != 0 && channels[i].getUserlimit() <= (int)channels[i].getMembers().size())
+            {
+                sendReply(client, 471, "Channel is full", "JOIN");
+                return;
+            }
+            if (channels[i].isMember(client))
+                return;
+            channels[i].addMember(client);
+            // sendJoinReply(client, channels[i]);
+            return;
         }
     }
     channels.push_back(Channel(params[0], client));
-    
+    // sendJoinReply(client, channels.back());
 }
 
 
@@ -332,7 +361,6 @@ void Server::handelCommand(command cmd, Client* client){
             std::string reply = ":server CAP * NAK :" + cmd.params[1] + "\r\n";
             send(client->getFd(), reply.c_str(), reply.size(), 0);
         }
-        // CAP END → ignore silently
     }
     else if (cmd.command == "PASS")
         handlePass(client, cmd.params, _password);
@@ -341,7 +369,7 @@ void Server::handelCommand(command cmd, Client* client){
     else if (cmd.command == "USER")
         handleUser(client, cmd.params);
     else if (cmd.command == "JOIN")
-        handleJoin(client, cmd.params);
+        handleJoin(client, cmd.params, _channels);
     else if (cmd.command == "PRIVMSG")
         handlePrivmsg(client, cmd.params);
     else if (cmd.command == "KICK")
