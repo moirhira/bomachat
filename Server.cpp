@@ -1,7 +1,10 @@
 #include "Server.hpp"
 
 Server::Server(int port, std::string password) : _port(port), _password(password) {}
-Server::~Server() {}
+Server::~Server() {
+    for (size_t i = 0; i < _clients.size(); i++)
+        delete _clients[i];
+}
 
 static bool isPreRegistrationCommand(const std::string& cmd)
 {
@@ -71,10 +74,10 @@ void Server::run() {
 
 
 Client* Server::getClientById(int id) {
-    for (int i = 0 ; i < _clients.size(); i++)
+    for (size_t i = 0 ; i < _clients.size(); i++)
     {
-        if (_clients[i].getFd() == id)
-            return &_clients[i];
+        if (_clients[i]->getFd() == id)
+            return _clients[i];
     }
     return NULL;
 }
@@ -92,7 +95,7 @@ void Server::acceptClient() {
         close(client_fd);
         return;
     }
-    _clients.push_back(Client(client_fd));
+    _clients.push_back(new Client(client_fd));
     _fds[_nfds].fd = client_fd;
     _fds[_nfds].events = POLLIN;
     _nfds++;
@@ -190,7 +193,7 @@ void sendWelcome(Client* client) {
     sendReply(client, 004, "ircserv", "");
 }
 
-void handleNick(Client* client, std::vector<std::string>& params, std::vector<Client>& clients) {
+void handleNick(Client* client, std::vector<std::string>& params, std::vector<Client*>& clients) {
     if (params.size() < 1)
     {
         sendReply(client, 431, "No nickname given", "NICK");
@@ -219,7 +222,7 @@ void handleNick(Client* client, std::vector<std::string>& params, std::vector<Cl
     }
     for (size_t j = 0; j < clients.size(); j++)
     {
-        if (clients[j].getFd() != client->getFd() && clients[j].getNickname() == newNick)
+        if (clients[j]->getFd() != client->getFd() && clients[j]->getNickname() == newNick)
         {
             sendReply(client, 433, "nickname already taken by another client", "NICK");
             return;
@@ -427,9 +430,10 @@ void Server::handelClient(int& i) {
         _fds[i] = _fds[_nfds - 1];
         _nfds--;
         i--;
-        for (int j = 0; j < _clients.size(); j++)
+        for (size_t j = 0; j < _clients.size(); j++)
         {
-            if (_clients[j].getFd() == fd)            {
+            if (_clients[j]->getFd() == fd)            {
+                delete _clients[j];
                 _clients.erase(_clients.begin() + j);
                 break;
             }

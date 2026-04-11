@@ -25,7 +25,7 @@ struct command
 class Server {
     private:
         int _sockfd;
-        std::vector<Client> _clients;
+        std::vector<Client*> _clients;
         int _port;
         std::string _password;
         struct pollfd _fds[1024];
