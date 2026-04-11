@@ -30,10 +30,18 @@ class Channel {
         void setPass(std::string pass);
         void setTopic(std::string topic);
         void setUsrlimit(int limit);
+        void setInviteOnly(bool v);
+        void setTopicRestricted(bool v);
 
+
+        void addToInviteList(Client* client);
         void addMember(Client* client);
         bool isMember(Client* client);
-        bool isOpearator(Client* client);
+        bool isOperator(Client* client);
+        bool isInvited(Client* client);
+        bool isInviteOnly();
+        bool isTopicRestricted();
+
 
 };
 
