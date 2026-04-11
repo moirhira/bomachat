@@ -42,7 +42,6 @@ class Channel {
         bool isInviteOnly();
         bool isTopicRestricted();
 
-
 };
 
 
