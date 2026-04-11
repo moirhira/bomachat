@@ -13,6 +13,7 @@
 #include "Client.hpp"
 #include <sstream>
 #include <iomanip>
+#include "Channel.hpp"
 
 struct command
 {
@@ -29,7 +30,7 @@ class Server {
         std::string _password;
         struct pollfd _fds[1024];
         int _nfds;
-        std::vector<std::string> _channels;
+        std::vector<Channel> _channels;
     public:
         Server(int port, std::string password);
         ~Server();

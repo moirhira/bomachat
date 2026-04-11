@@ -257,9 +257,36 @@ void handleUser(Client* client, const std::vector<std::string> params) {
     if(client->isReg())
         sendWelcome(client);
 }
-void handleJoin(Client* client, std::vector<std::string> params) {
+
+
+void handleJoin(Client* client, std::vector<std::string> params, std::vector<Channel>& channels) {
+    if (params.size() < 2)
+    {
+        sendReply(client, 461, "Not enough parameters", "JOIN");
+        return;
+    }
+     if(!client->isReg())
+    {
+        sendReply(client, 451, "You have not registered", "USER");
+        return;
+    }
+    if (params[0][0] != '#')
+    {
+        sendReply(client, 433, "Channel name should start with #", "USER");
+        return;
+    }
+    for (size_t i = 0; i < channels.size(); i++)
+    {
+        if (params[0] == channels[i].getName())
+        {
+
+        }
+    }
+    channels.push_back(Channel(params[0], client));
     
 }
+
+
 void handlePrivmsg(Client* client, std::vector<std::string> params) {
     
 }
