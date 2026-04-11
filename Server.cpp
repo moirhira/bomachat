@@ -259,7 +259,43 @@ void handleUser(Client* client, const std::vector<std::string> params) {
 }
 
 
+static void sendJoinReply(Client* client, Channel& channel)
+{
+    std::string joinMsg = ":" + client->getNickname() + "!" + client->getUsername() + "@host JOIN " + channel.getName() + "\r\n";
+    send(client->getFd(), joinMsg.c_str(), joinMsg.size(), 0);
 
+    std::string nick = client->getNickname();
+    std::string channnelName = channel.getName();
+
+
+    if (!channel.getTopic().empty())
+    {
+        std::string topicReply  = ":server 332 " + nick + " " + channnelName + " :" + channel.getTopic() + "\r\n";
+        send(client->getFd(), topicReply.c_str(), topicReply.size(), 0);
+    }
+    else
+    {
+        std::string noTopic  = ":server 331 " + nick + " " + channnelName + " :NO topic is set\r\n";
+        send(client->getFd(), noTopic.c_str(), noTopic.size(), 0); 
+    }
+
+    std::string namesList = ":server 353 " + nick  + " = " + channnelName + " :";
+    std::vector<Client*> members = channel.getMembers();
+    for (size_t i = 0 ; i < members.size(); i++)
+    {
+        if (channel.isOperator(members[i]))
+            namesList += "@";
+        namesList += members[i]->getNickname();
+        if (i + 1 < members.size())
+            namesList += " ";
+    }
+
+    namesList += "\r\n";
+    send(client->getFd(), namesList.c_str(), namesList.size(), 0);
+
+    std::string endNames  = ":server 366 " + nick + " " + channnelName + " :End of /NAMES list\r\n";
+    send(client->getFd(), endNames.c_str(), endNames.size(), 0);
+}
 
 void handleJoin(Client* client, std::vector<std::string> params, std::vector<Channel>& channels) {
     if (params.size() < 1)
@@ -307,12 +343,12 @@ void handleJoin(Client* client, std::vector<std::string> params, std::vector<Cha
             if (channels[i].isMember(client))
                 return;
             channels[i].addMember(client);
-            // sendJoinReply(client, channels[i]);
+            sendJoinReply(client, channels[i]);
             return;
         }
     }
     channels.push_back(Channel(params[0], client));
-    // sendJoinReply(client, channels.back());
+    sendJoinReply(client, channels.back());
 }
 
 
