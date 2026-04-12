@@ -355,9 +355,62 @@ void handleJoin(Client* client, std::vector<std::string> params, std::vector<Cha
 }
 
 
-void handlePrivmsg(Client* client, std::vector<std::string> params, std::vector<Client*> clients, std::vector<Channel> channels) {
-    
-    
+void handlePrivmsg(Client* client, std::vector<std::string> params, std::vector<Client*>& clients, std::vector<Channel>& channels)
+{
+    if (params.size() == 0)
+    {
+        sendReply(client, 411, "No recipient given (PRIVMSG)", "PRIVMSG");
+        return;
+    }
+    if (params.size() == 1)
+    {
+        sendReply(client, 412, "No text to send", "PRIVMSG");
+        return;
+    }
+    std::string target = params[0];
+    std::string msg = params[1];
+    if (target[0] == '#')
+    {
+        for (size_t i = 0; i < channels.size(); i++)
+        {
+            if (channels[i].getName() == target)
+            {
+                if (!channels[i].isMember(client))
+                {
+                    sendReply(client, 442, "You are not a member of this channel", "PRIVMSG");
+                    return;
+                }
+                
+                std::vector<Client*> members = channels[i].getMembers();
+                for (size_t j = 0; j < channels[i].getMembers().size(); j++)
+                {
+                    if (client->getFd() != members[j]->getFd()){
+                        std::string prvMsg = ":" + client->getNickname() + "!" + client->getUsername() + "@<host> PRIVMSG " + target + " :" + msg + "\r\n";
+                        send(members[j]->getFd(), prvMsg.c_str(), prvMsg.size(), 0);
+                    }
+                }
+                return;
+                
+            }
+
+        }
+        sendReply(client, 403, "Channel doesn't exist", "PRIVMSG");
+        return;
+    }
+    else
+    {
+        for(size_t i = 0; i < clients.size(); i++)
+        {
+            if (clients[i]->getNickname() == target)
+            {
+                std::string prvMsg = ": " + client->getNickname() + "!" + client->getUsername() + "@<host> PRIVMSG " + target + " :" + msg;
+                send(clients[i]->getFd(), prvMsg.c_str(), prvMsg.size(), 0);
+                return;
+            }
+        }
+        sendReply(client, 401, "This client doesn't exist", "PRIVMSG");
+        return;
+    }
 }
 
 void handleKick(Client* client, std::vector<std::string> params) {
