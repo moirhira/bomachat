@@ -414,6 +414,18 @@ void handlePrivmsg(Client* client, std::vector<std::string> params, std::vector<
     sendReply(client, 401, target + " :No such nick/channel", "PRIVMSG");
 }
 
+
+
+void handleTopic(Client* client, std::vector<std::string> params, std::vector<Channel>& channels) {
+    if (params.size() < 1)
+    {
+        sendReply(client, 461, "Not enough parameters", "TOPIC");
+        return;
+    }
+    
+}
+
+
 void handleKick(Client* client, std::vector<std::string> params) {
     
 }
@@ -422,9 +434,6 @@ void handleInvite(Client* client, std::vector<std::string> params) {
     
 }
 
-void handleTopic(Client* client, std::vector<std::string> params) {
-    
-}
 void handleMode(Client* client, std::vector<std::string> params) {
     
 }
@@ -466,12 +475,12 @@ void Server::handelCommand(command cmd, Client* client){
         handleJoin(client, cmd.params, _channels);
     else if (cmd.command == "PRIVMSG")
         handlePrivmsg(client, cmd.params, _clients, _channels);
+    else if (cmd.command == "TOPIC")
+        handleTopic(client, cmd.params, _channels);
     else if (cmd.command == "KICK")
         handleKick(client, cmd.params);
     else if (cmd.command == "INVITE")
         handleInvite(client, cmd.params);
-    else if (cmd.command == "TOPIC")
-        handleTopic(client, cmd.params);
     else if (cmd.command == "MODE")
         handleMode(client, cmd.params);
 }
