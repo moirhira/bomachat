@@ -377,10 +377,10 @@ void handlePrivmsg(Client* client, std::vector<std::string> params, std::vector<
             {
                 if (!channels[i].isMember(client))
                 {
-                    sendReply(client, 442, "You are not a member of this channel", "PRIVMSG");
+                    sendReply(client, 442, "You are not on that channel", "PRIVMSG");
                     return;
                 }
-                
+
                 std::vector<Client*> members = channels[i].getMembers();
                 for (size_t j = 0; j < channels[i].getMembers().size(); j++)
                 {
@@ -389,28 +389,15 @@ void handlePrivmsg(Client* client, std::vector<std::string> params, std::vector<
                         send(members[j]->getFd(), prvMsg.c_str(), prvMsg.size(), 0);
                     }
                 }
-                return;
-                
+                return;   
             }
 
         }
         sendReply(client, 403, "Channel doesn't exist", "PRIVMSG");
         return;
     }
-    else
-    {
-        for(size_t i = 0; i < clients.size(); i++)
-        {
-            if (clients[i]->getNickname() == target)
-            {
-                std::string prvMsg = ": " + client->getNickname() + "!" + client->getUsername() + "@<host> PRIVMSG " + target + " :" + msg;
-                send(clients[i]->getFd(), prvMsg.c_str(), prvMsg.size(), 0);
-                return;
-            }
-        }
-        sendReply(client, 401, "This client doesn't exist", "PRIVMSG");
-        return;
-    }
+
+    
 }
 
 void handleKick(Client* client, std::vector<std::string> params) {
