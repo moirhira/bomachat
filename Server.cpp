@@ -411,6 +411,7 @@ void handlePrivmsg(Client* client, std::vector<std::string> params, std::vector<
             return;
         }
     }
+    sendReply(client, 401, target + " :No such nick/channel", "PRIVMSG");
 }
 
 void handleKick(Client* client, std::vector<std::string> params) {
