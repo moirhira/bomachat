@@ -27,6 +27,7 @@ class Channel {
         std::string getTopic() const;
         int getUserlimit() const;
         std::vector<Client*> getMembers() const;
+        std::vector<Client*> getOperators() const;
 
         void setPass(std::string pass);
         void setTopic(std::string topic);

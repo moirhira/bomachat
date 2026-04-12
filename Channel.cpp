@@ -28,6 +28,10 @@ std::vector<Client*> Channel::getMembers() const {
     return _members;
 }
 
+ std::vector<Client*> Channel::getOperators() const {
+    return _operators;
+ }
+
 void Channel::setPass(std::string pass) {
     _pass = pass;
 }

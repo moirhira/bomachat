@@ -399,15 +399,12 @@ void handlePrivmsg(Client* client, std::vector<std::string> params, std::vector<
 
     for(size_t i = 0; i < clients.size(); i++)
     {
-        printf("target -> %s\n", target.c_str());
-        printf("client %s [%ld] ->\n", client->getNickname().c_str(), i);
         if (clients[i]->getNickname() == target)
         {
             std::string prvMsg = ":" + client->getNickname() + "!" +
                      client->getUsername() + "@localhost PRIVMSG " +
                      target + " :" + msg + "\r\n";
             send(clients[i]->getFd(), prvMsg.c_str(), prvMsg.size(), 0);
-            printf("sneded to %s\n", clients[i]->getNickname().c_str());
             return;
         }
     }
@@ -474,31 +471,61 @@ void handleMode(Client* client, std::vector<std::string> params, std::vector<Cha
         sendReply(client, 476, "Channel name should start with #", "MODE");
         return;
     }
-    for (size_t i = 0; i < channels.size(); i++)
-        {
-            if (channels[i].getName() == target)
-            {
-                if (!channels[i].isMember(client))
-                {
-                    sendReply(client, 442, "You are not on that channel", "PRIVMSG");
-                    return;
-                }
-
-                std::vector<Client*> members = channels[i].getMembers();
-                for (size_t j = 0; j < channels[i].getMembers().size(); j++)
-                {
-                    if (client->getFd() != members[j]->getFd()){
-                        std::string prvMsg = ":" + client->getNickname() + "!" + client->getUsername() + "@<host> PRIVMSG " + target + " :" + msg + "\r\n";
-                        send(members[j]->getFd(), prvMsg.c_str(), prvMsg.size(), 0);
-                    }
-                }
-                return;   
-            }
-
-        }
-        sendReply(client, 403, "Channel doesn't exist", "PRIVMSG");
+    if(!client->isReg())
+    {
+        sendReply(client, 451, "You have not registered", "MODE");
         return;
-    
+    }
+    for (size_t i = 0; i < channels.size(); i++)
+    {
+        if (channels[i].getName() == params[0])
+        {
+            if (!channels[i].isOperator(client))
+            {
+                sendReply(client, 482, "You are not on that channel", "MODE");
+                return;
+            }
+            char sign = params[1][0];
+            char flag = params[1][1];
+            switch (flag)
+            {
+                case 'i':
+                {
+                    if (sign == '+')
+                        channels[i].setInviteOnly(true);
+                    else
+                        channels[i].setInviteOnly(false);
+                }
+                case 'o' :
+                {
+                    if (params.size() < 3)
+                    {
+                        sendReply(client, 461, "Not enough parameters", "MODE");
+                        return;
+                    }
+                    channels[i].getOperators().push_back(client);
+
+                }
+                case 'l' :
+                {
+
+                }
+                case 'k' :
+                {
+                    
+                }
+                case 't' :
+                {
+
+                }
+                default:
+                    sendReply(client, 472, std::string("Unknown mode flag ") + flag, "MODE");
+                    return;
+            }
+        }
+    }
+    sendReply(client, 403, "Channel doesn't exist", "PRIVMSG");
+    return;
 }
 
 
