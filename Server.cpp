@@ -463,17 +463,55 @@ void handleTopic(Client* client, std::vector<std::string> params, std::vector<Ch
 }
 
 
+void handleMode(Client* client, std::vector<std::string> params, std::vector<Channel>& channels) {
+    if (params.size() < 2)
+    {
+        sendReply(client, 461, "Not enough parameters", "MODE");
+        return;
+    }
+    if (params[0][0] != '#')
+    {
+        sendReply(client, 476, "Channel name should start with #", "MODE");
+        return;
+    }
+    for (size_t i = 0; i < channels.size(); i++)
+        {
+            if (channels[i].getName() == target)
+            {
+                if (!channels[i].isMember(client))
+                {
+                    sendReply(client, 442, "You are not on that channel", "PRIVMSG");
+                    return;
+                }
+
+                std::vector<Client*> members = channels[i].getMembers();
+                for (size_t j = 0; j < channels[i].getMembers().size(); j++)
+                {
+                    if (client->getFd() != members[j]->getFd()){
+                        std::string prvMsg = ":" + client->getNickname() + "!" + client->getUsername() + "@<host> PRIVMSG " + target + " :" + msg + "\r\n";
+                        send(members[j]->getFd(), prvMsg.c_str(), prvMsg.size(), 0);
+                    }
+                }
+                return;   
+            }
+
+        }
+        sendReply(client, 403, "Channel doesn't exist", "PRIVMSG");
+        return;
+    
+}
+
+
 void handleKick(Client* client, std::vector<std::string> params) {
     
 }
+
+
 
 void handleInvite(Client* client, std::vector<std::string> params) {
     
 }
 
-void handleMode(Client* client, std::vector<std::string> params) {
-    
-}
 
 void Server::handelCommand(command cmd, Client* client){ 
 
@@ -514,12 +552,12 @@ void Server::handelCommand(command cmd, Client* client){
         handlePrivmsg(client, cmd.params, _clients, _channels);
     else if (cmd.command == "TOPIC")
         handleTopic(client, cmd.params, _channels);
+    else if (cmd.command == "MODE")
+        handleMode(client, cmd.params, _channels);
     else if (cmd.command == "KICK")
         handleKick(client, cmd.params);
     else if (cmd.command == "INVITE")
         handleInvite(client, cmd.params);
-    else if (cmd.command == "MODE")
-        handleMode(client, cmd.params);
 }
 void Server::handelClient(int& i) {
     char buffer[1024];
