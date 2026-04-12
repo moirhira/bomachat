@@ -427,44 +427,39 @@ void handleTopic(Client* client, std::vector<std::string> params, std::vector<Ch
         sendReply(client, 476, "Channel name should start with #", "TOPIC");
         return;
     }
-    if (params.size() == 1)
+    for (size_t i = 0; i < channels.size(); i++)
     {
-        
-
-    }
-    else
-    {
-        for (size_t i = 0; i < channels.size(); i++)
+        if (channels[i].getName() == params[0])
         {
-            if (channels[i].getName() == params[0])
+            if (!channels[i].isMember(client))
             {
-                if (!channels[i].isMember(client))
-                {
-                    sendReply(client, 442, "You are not on that channel", "TOPIC");
-                    return;
-                }
-                if (channels[i].isTopicRestricted() && !channels[i].isOperator(client))
-                {
-                    sendReply(client, 442, "You are not allowed to change the topic of this channel", "TOPIC");
-                    return;
-                }
-                channels[i].setTopic(params[1]);
-                std::string topicMsg = ":" + client->getNickname() + "!" + client->getUsername() + "@localhost TOPIC " + params[0] + " :" + params[1] + "\r\n";
-                std::vector<Client*> members = channels[i].getMembers();
-                for (size_t j = 0; j < channels[i].getMembers().size(); j++)
-                {
-                    send(members[j]->getFd(), topicMsg.c_str(), topicMsg.size(), 0);
-                }
-                return;
-
-            }
-            else
-            {
-                sendReply(client, 403, "Channel doesn't exist", "TOPIC");
+                sendReply(client, 442, "You are not on that channel", "TOPIC");
                 return;
             }
+            if (params.size() == 1)
+            {
+                if (!channels[i].getTopic().empty())
+                    sendReply(client, 332, channels[i].getTopic(), "TOPIC");
+                else
+                    sendReply(client, 331, "No topic is set", "TOPIC");
+                return;
+            }
+            if (channels[i].isTopicRestricted() && !channels[i].isOperator(client))
+            {
+                sendReply(client, 482, "You are not allowed to change the topic", "TOPIC");
+                return;
+            }
+            channels[i].setTopic(params[1]);
+            std::string topicMsg = ":" + client->getNickname() + "!" + client->getUsername() + "@localhost TOPIC " + params[0] + " :" + params[1] + "\r\n";
+            std::vector<Client*> members = channels[i].getMembers();
+            for (size_t j = 0; j < channels[i].getMembers().size(); j++)
+            {
+                send(members[j]->getFd(), topicMsg.c_str(), topicMsg.size(), 0);
+            }
+            return;
         }
     }
+    sendReply(client, 403, "Channel doesn't exist", "TOPIC");
 }
 
 
