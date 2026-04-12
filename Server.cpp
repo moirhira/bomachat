@@ -397,7 +397,20 @@ void handlePrivmsg(Client* client, std::vector<std::string> params, std::vector<
         return;
     }
 
-    
+    for(size_t i = 0; i < clients.size(); i++)
+    {
+        printf("target -> %s\n", target.c_str());
+        printf("client %s [%ld] ->\n", client->getNickname().c_str(), i);
+        if (clients[i]->getNickname() == target)
+        {
+            std::string prvMsg = ":" + client->getNickname() + "!" +
+                     client->getUsername() + "@localhost PRIVMSG " +
+                     target + " :" + msg + "\r\n";
+            send(clients[i]->getFd(), prvMsg.c_str(), prvMsg.size(), 0);
+            printf("sneded to %s\n", clients[i]->getNickname().c_str());
+            return;
+        }
+    }
 }
 
 void handleKick(Client* client, std::vector<std::string> params) {
