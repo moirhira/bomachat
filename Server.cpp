@@ -355,7 +355,8 @@ void handleJoin(Client* client, std::vector<std::string> params, std::vector<Cha
 }
 
 
-void handlePrivmsg(Client* client, std::vector<std::string> params) {
+void handlePrivmsg(Client* client, std::vector<std::string> params, std::vector<Client*> clients, std::vector<Channel> channels) {
+    
     
 }
 
@@ -410,7 +411,7 @@ void Server::handelCommand(command cmd, Client* client){
     else if (cmd.command == "JOIN")
         handleJoin(client, cmd.params, _channels);
     else if (cmd.command == "PRIVMSG")
-        handlePrivmsg(client, cmd.params);
+        handlePrivmsg(client, cmd.params, _clients, _channels);
     else if (cmd.command == "KICK")
         handleKick(client, cmd.params);
     else if (cmd.command == "INVITE")
