@@ -322,7 +322,7 @@ void handleJoin(Client* client, std::vector<std::string> params, std::vector<Cha
         {
             if (channels[i].isInviteOnly() && !channels[i].isInvited(client))
             {
-                sendReply(client, 473, "You are not invited to this channel", "JOIN");
+                sendReply(client, 473, "You are not invited to this channel", params[0]);
                 return;
             }
             if (!channels[i].getPass().empty())
@@ -334,13 +334,13 @@ void handleJoin(Client* client, std::vector<std::string> params, std::vector<Cha
                     pswd = "";
                 if (channels[i].getPass() != pswd)
                 {
-                    sendReply(client, 475, "Invalid channel password", "JOIN");
+                    sendReply(client, 475, "Invalid channel password", params[0]);
                     return;
                 }
             }
             if (channels[i].getUserlimit() != 0 && channels[i].getUserlimit() <= (int)channels[i].getMembers().size())
             {
-                sendReply(client, 471, "Channel is full", "JOIN");
+                sendReply(client, 471, "Channel is full", params[0]);
                 return;
             }
             if (channels[i].isMember(client))
@@ -436,9 +436,9 @@ void handleTopic(Client* client, std::vector<std::string> params, std::vector<Ch
             if (params.size() == 1)
             {
                 if (!channels[i].getTopic().empty())
-                    sendReply(client, 332, channels[i].getTopic(), "TOPIC");
+                    sendReply(client, 332, channels[i].getTopic(), params[0]);
                 else
-                    sendReply(client, 331, "No topic is set", "TOPIC");
+                    sendReply(client, 331, "No topic is set", params[0]);
                 return;
             }
             if (channels[i].isTopicRestricted() && !channels[i].isOperator(client))
@@ -466,14 +466,23 @@ void handleMode(Client* client, std::vector<std::string> params, std::vector<Cha
         sendReply(client, 461, "Not enough parameters", "MODE");
         return;
     }
+    printf("params[0] -> %s\n", params[0].c_str());
+    printf("params[1] -> %s\n", params[1].c_str());
     if (params[0][0] != '#')
     {
-        sendReply(client, 476, "Channel name should start with #", "MODE");
+        if (params[0] == client->getNickname())
+            return;
+        sendReply(client, 502, "Can't change mode for other users", "MODE");
         return;
     }
     if(!client->isReg())
     {
         sendReply(client, 451, "You have not registered", "MODE");
+        return;
+    }
+    if (params[1].size() < 2 || (params[1][0] != '+' && params[1][0] != '-'))
+    {
+        sendReply(client, 472, "Unknown mode flag", "MODE");
         return;
     }
     for (size_t i = 0; i < channels.size(); i++)
@@ -482,7 +491,7 @@ void handleMode(Client* client, std::vector<std::string> params, std::vector<Cha
         {
             if (!channels[i].isOperator(client))
             {
-                sendReply(client, 482, "You are not on that channel", "MODE");
+                sendReply(client, 482, "You're not channel operator", "MODE");
                 return;
             }
             char sign = params[1][0];
@@ -518,6 +527,13 @@ void handleMode(Client* client, std::vector<std::string> params, std::vector<Cha
                             targetClient = channels[i].getMembers()[j];
                             break;
                         }
+                    }
+                    if (!targetClient)
+                    {
+                        std::string nick = client->getNickname().empty() ? "*" : client->getNickname();
+                        std::string reply = ":server 441 " + nick + " " + params[2] + " " + params[0] + " :They aren't on that channel\r\n";
+                        send(client->getFd(), reply.c_str(), reply.size(), 0);
+                        return;
                     }
                     if (sign == '+')
                     {
@@ -576,7 +592,8 @@ void handleMode(Client* client, std::vector<std::string> params, std::vector<Cha
                         }
                         channels[i].setUsrlimit(static_cast<int>(newUserLimit));
                     }
-                    std::string msgReply = ":" + client->getNickname() + "!" + client->getUsername() + "@localhost MODE " + params[0] + " " + params[1] + "\r\n";
+                    std::string modeArg = (sign == '+' ? " " + params[2] : "");
+                    std::string msgReply = ":" + client->getNickname() + "!" + client->getUsername() + "@localhost MODE " + params[0] + " " + params[1] + modeArg + "\r\n";
                     std::vector<Client*> members = channels[i].getMembers();
                     for (size_t j = 0; j < channels[i].getMembers().size(); j++)
                     {
@@ -600,7 +617,8 @@ void handleMode(Client* client, std::vector<std::string> params, std::vector<Cha
                         }
                         channels[i].setPass(params[2]);
                     }
-                    std::string msgReply = ":" + client->getNickname() + "!" + client->getUsername() + "@localhost MODE " + params[0] + " " + params[1] + "\r\n";
+                    std::string modeArg = (sign == '+' ? " " + params[2] : "");
+                    std::string msgReply = ":" + client->getNickname() + "!" + client->getUsername() + "@localhost MODE " + params[0] + " " + params[1] + modeArg + "\r\n";
                     std::vector<Client*> members = channels[i].getMembers();
                     for (size_t j = 0; j < channels[i].getMembers().size(); j++)
                     {
@@ -630,7 +648,7 @@ void handleMode(Client* client, std::vector<std::string> params, std::vector<Cha
             return;
         }
     }
-    sendReply(client, 403, "Channel doesn't exist", "PRIVMSG");
+    sendReply(client, 403, "Channel doesn't exist", "MODE");
     return;
 }
 
@@ -640,13 +658,15 @@ void handleMode(Client* client, std::vector<std::string> params, std::vector<Cha
 
 
 void handleKick(Client* client, std::vector<std::string> params) {
-    
+    (void)client;
+    (void)params;
 }
 
 
 
 void handleInvite(Client* client, std::vector<std::string> params) {
-    
+    (void)client;
+    (void)params;
 }
 
 
