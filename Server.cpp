@@ -537,6 +537,42 @@ void handleMode(Client* client, std::vector<std::string> params, std::vector<Cha
                 }
                 case 'l' :
                 {
+                    if (sign == '-')
+                    {
+                        channels[i].setUsrlimit(0);
+                        break;
+                    }
+                    else
+                    {
+                        if (params.size() < 3)
+                        {
+                            sendReply(client, 461, "Not enough parameters", "MODE");
+                            return;
+                        }
+                        if (!isdigit(static_cast<unsigned char>(params[2][0])))
+                        {
+                            sendReply(client, 461, "Not enough parameters", "MODE");
+                            return;
+                        }
+                        for (size_t i = 0; params[2].size(); i++)
+                        {
+                            if (!isdigit(params[2][i]))
+                            {
+                                sendReply(client, 460, "User limit should be a number", "MODE");
+                                return;
+                            }
+                        }
+                        long newUserLimit = strtol(params[2].c_str(), NULL, 10);
+                        if (newUserLimit < 0 ||  newUserLimit >= 1024)
+                        {
+                            sendReply(client, 460, "User limit should be 1 >=  <= 1024", "MODE");
+                            return;
+                        }
+                        channels[i].setUsrlimit(static_cast<int>(newUserLimit));
+                        std::string msgReply = ":" + client->getNickname() + "!" + client->getUsername() + "@localhost MODE " + params[0] + " " + params[1] + " " + params[2] +"\r\n";
+                        send(client->getFd(), msgReply.c_str(), msgReply.size(), 0);
+                        break;
+                    }
 
                 }
                 case 'k' :
