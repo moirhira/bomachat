@@ -498,7 +498,42 @@ void handleMode(Client* client, std::vector<std::string> params, std::vector<Cha
                 }
                 case 'o' :
                 {
-                    
+                    if (sign == '+')
+                    {
+                        if (params.size() < 3)
+                        {
+                            sendReply(client, 461, "Not enough parameters", "MODE");
+                            return;
+                        }
+                        Client* targetClient = NULL;
+                        for (size_t j = 0; j < channels[i].getMembers().size(); j++)
+                        {
+                            if (channels[i].getMembers()[j]->getNickname() == params[2])
+                            {
+                                targetClient = channels[i].getMembers()[j];
+                                break;
+                            }
+                        }
+                        channels[i].getOperators().push_back(client);
+                        std::string msgReply = ":" + client->getNickname() + "!" + client->getUsername() + "@localhost MODE " + params[0] + " " + params[1] + " " + params[2] +"\r\n";
+                        send(client->getFd(), msgReply.c_str(), msgReply.size(), 0);
+                        break;
+                    }
+                    {
+                        Client* targetClient = NULL;
+                        for (size_t j = 0; j < channels[i].getMembers().size(); j++)
+                        {
+                            if (channels[i].getMembers()[j]->getNickname() == params[2])
+                            {
+                                targetClient = channels[i].getMembers()[j];
+                                break;
+                            }
+                        }
+                        channels[i].getOperators().erase(channels[i].getOperators().begin() + i);
+                        std::string msgReply = ":" + client->getNickname() + "!" + client->getUsername() + "@localhost MODE " + params[0] + " " + params[1] + " " + params[2] +"\r\n";
+                        send(client->getFd(), msgReply.c_str(), msgReply.size(), 0);
+                        break;
+                    }
                 }
                 case 'l' :
                 {
