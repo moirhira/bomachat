@@ -540,7 +540,6 @@ void handleMode(Client* client, std::vector<std::string> params, std::vector<Cha
                     if (sign == '-')
                     {
                         channels[i].setUsrlimit(0);
-                        break;
                     }
                     else
                     {
@@ -569,14 +568,25 @@ void handleMode(Client* client, std::vector<std::string> params, std::vector<Cha
                             return;
                         }
                         channels[i].setUsrlimit(static_cast<int>(newUserLimit));
-                        std::string msgReply = ":" + client->getNickname() + "!" + client->getUsername() + "@localhost MODE " + params[0] + " " + params[1] + " " + params[2] +"\r\n";
-                        send(client->getFd(), msgReply.c_str(), msgReply.size(), 0);
-                        break;
                     }
+                    std::string msgReply = ":" + client->getNickname() + "!" + client->getUsername() + "@localhost MODE " + params[0] + " " + params[1] + "\r\n";
+                    send(client->getFd(), msgReply.c_str(), msgReply.size(), 0);
+                    break;
 
                 }
                 case 'k' :
                 {
+                    if (sign = '-')
+                    {
+                        channels[i].setPass("");
+                    }
+                    else
+                    {
+                        channels[i].setPass(params[2]);
+                    }
+                    std::string msgReply = ":" + client->getNickname() + "!" + client->getUsername() + "@localhost MODE " + params[0] + " " + params[1] + "\r\n";
+                    send(client->getFd(), msgReply.c_str(), msgReply.size(), 0);
+                    break;
                     
                 }
                 case 't' :
