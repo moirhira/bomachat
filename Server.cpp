@@ -498,13 +498,7 @@ void handleMode(Client* client, std::vector<std::string> params, std::vector<Cha
                 }
                 case 'o' :
                 {
-                    if (params.size() < 3)
-                    {
-                        sendReply(client, 461, "Not enough parameters", "MODE");
-                        return;
-                    }
-                    channels[i].getOperators().push_back(client);
-
+                    
                 }
                 case 'l' :
                 {
