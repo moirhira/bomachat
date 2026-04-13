@@ -495,6 +495,9 @@ void handleMode(Client* client, std::vector<std::string> params, std::vector<Cha
                         channels[i].setInviteOnly(true);
                     else
                         channels[i].setInviteOnly(false);
+                    std::string msgReply = ":" + client->getNickname() + "!" + client->getUsername() + "@localhost MODE " + params[0] + " " + params[1] + "\r\n";
+                    send(client->getFd(), msgReply.c_str(), msgReply.size(), 0);
+                    break;
                 }
                 case 'o' :
                 {
@@ -587,10 +590,16 @@ void handleMode(Client* client, std::vector<std::string> params, std::vector<Cha
                     std::string msgReply = ":" + client->getNickname() + "!" + client->getUsername() + "@localhost MODE " + params[0] + " " + params[1] + "\r\n";
                     send(client->getFd(), msgReply.c_str(), msgReply.size(), 0);
                     break;
-                    
                 }
                 case 't' :
                 {
+                    if (sign == '+')
+                        channels[i].setTopicRestricted(true);
+                    else
+                        channels[i].setTopicRestricted(false);
+                    std::string msgReply = ":" + client->getNickname() + "!" + client->getUsername() + "@localhost MODE " + params[0] + " " + params[1] + "\r\n";
+                    send(client->getFd(), msgReply.c_str(), msgReply.size(), 0);
+                    break;
 
                 }
                 default:
