@@ -34,6 +34,8 @@ class Channel {
         void setUsrlimit(int limit);
         void setInviteOnly(bool v);
         void setTopicRestricted(bool v);
+        void addOperator(Client* client);
+        void removeOperator(Client* client);
 
 
         void addToInviteList(Client* client);

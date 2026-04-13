@@ -47,6 +47,21 @@ void Channel::addMember(Client* client) {
     _members.push_back(client);
 }
 
+void Channel::addOperator(Client* client) {
+    _operators.push_back(client);
+}
+
+void Channel::removeOperator(Client* client) {
+    for (size_t i = 0; i < _operators.size(); i++)
+    {
+        if (_operators[i] == client)
+        {
+            _operators.erase(_operators.begin() + i);
+            break;
+        }
+    }
+}
+
 bool Channel::isMember(Client* client) {
    for (size_t i = 0; i < _members.size(); i++)
     {
