@@ -656,8 +656,17 @@ void handleMode(Client* client, std::vector<std::string> params, std::vector<Cha
 
 
 void handleKick(Client* client, std::vector<std::string> params) {
-    (void)client;
-    (void)params;
+    if (params.size() < 3)
+    {
+        sendReply(client, 461, "Not enough parameters", "TOPIC");
+        return;
+    }
+    if (params[0][0] != '#')
+    {
+        sendReply(client, 476, "Channel name should start with #", "TOPIC");
+        return;
+    }
+    
 }
 
 
