@@ -718,8 +718,54 @@ void handleKick(Client* client, std::vector<std::string> params, std::vector<Cha
 
 
 
-void handleInvite(Client* client, std::vector<std::string> params) {
-    
+void handleInvite(Client* client, std::vector<std::string> params, std::vector<Channel>& channels, std::vector<Client*>& clients) {
+     if (params.size() < 2)
+    {
+        sendReply(client, 461, "Not enough parameters", "INVITE");
+        return;
+    }
+    std::string targetClientNick = params[0];
+    std::string targetChannel = params[1]; 
+    if (targetChannel[0] != '#')
+    {
+        sendReply(client, 476, "Channel name should start with #", "INVITE");
+        return;
+    }
+    for (size_t i = 0; i < channels.size(); i++)
+    {
+        if (channels[i].getName() == targetChannel)
+        {
+            if (channels[i].isMember(client))
+            {
+                if (channels[i].isOperator(client))
+                {
+                    for (size_t i = 0; i < clients.size(); i++)
+                    {
+                        if (clients[i]->getNickname() == targetClientNick)
+                        {
+                            
+                            
+                        }
+                    }
+                    sendReply(client, 401, "Target client not found", "INVITE");
+                    return;
+                }
+                else
+                {
+                    sendReply(client, 482, "You're not channel operator", "INVITE");
+                    return;
+                }
+
+            }
+            else
+            {
+                sendReply(client, 442, "You are not on that channel", "INVITE");
+                return;
+            }
+        }
+    }
+    sendReply(client, 403, "Channel doesn't exist", "INVITE");
+    return;
 }
 
 
@@ -777,7 +823,7 @@ void Server::handelCommand(command cmd, Client* client){
     else if (cmd.command == "KICK")
         handleKick(client, cmd.params, _channels);
     else if (cmd.command == "INVITE")
-        handleInvite(client, cmd.params);
+        handleInvite(client, cmd.params, _channels, _clients);
 }
 void Server::handelClient(int& i) {
     char buffer[1024];
