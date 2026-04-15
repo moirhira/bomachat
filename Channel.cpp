@@ -69,6 +69,7 @@ void Channel::removeMember(Client* client) {
         {
             _members.erase(_members.begin() + i);
             break;
+            
         }
     }
 }
