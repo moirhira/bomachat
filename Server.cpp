@@ -719,8 +719,7 @@ void handleKick(Client* client, std::vector<std::string> params, std::vector<Cha
 
 
 void handleInvite(Client* client, std::vector<std::string> params) {
-    (void)client;
-    (void)params;
+    
 }
 
 
