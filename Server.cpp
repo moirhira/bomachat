@@ -8,7 +8,7 @@ Server::~Server() {
 
 static bool isPreRegistrationCommand(const std::string& cmd)
 {
-    return (cmd == "PASS" || cmd == "NICK" || cmd == "USER" || cmd == "CAP");
+    return (cmd == "PASS" || cmd == "NICK" || cmd == "USER" || cmd == "CAP" || cmd == "PING" || cmd == "PONG");
 }
 
 
@@ -466,8 +466,6 @@ void handleMode(Client* client, std::vector<std::string> params, std::vector<Cha
         sendReply(client, 461, "Not enough parameters", "MODE");
         return;
     }
-    printf("params[0] -> %s\n", params[0].c_str());
-    printf("params[1] -> %s\n", params[1].c_str());
     if (params[0][0] != '#')
     {
         if (params[0] == client->getNickname())
@@ -697,6 +695,16 @@ void Server::handelCommand(command cmd, Client* client){
             send(client->getFd(), reply.c_str(), reply.size(), 0);
         }
     }
+    else if (cmd.command == "PING")
+    {
+        std::string token;
+        if (!cmd.params.empty())
+            token = cmd.params[0];
+        std::string reply = ":server PONG server :" + token + "\r\n";
+        send(client->getFd(), reply.c_str(), reply.size(), 0);
+    }
+    else if (cmd.command == "PONG")
+        return;
     else if (cmd.command == "PASS")
         handlePass(client, cmd.params, _password);
     else if (cmd.command == "NICK")
