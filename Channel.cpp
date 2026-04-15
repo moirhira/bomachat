@@ -62,6 +62,17 @@ void Channel::removeOperator(Client* client) {
     }
 }
 
+void Channel::removeMember(Client* client) {
+    for (size_t i = 0; i < _members.size(); i++)
+    {
+        if (_members[i] == client)
+        {
+            _members.erase(_members.begin() + i);
+            break;
+        }
+    }
+}
+
 bool Channel::isMember(Client* client) {
    for (size_t i = 0; i < _members.size(); i++)
     {

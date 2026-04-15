@@ -8,7 +8,7 @@ Server::~Server() {
 
 static bool isPreRegistrationCommand(const std::string& cmd)
 {
-    return (cmd == "PASS" || cmd == "NICK" || cmd == "USER" || cmd == "CAP" || cmd == "PING" || cmd == "PONG");
+    return (cmd == "KICK" || cmd == "PASS" || cmd == "NICK" || cmd == "USER" || cmd == "CAP" || cmd == "PING" || cmd == "PONG");
 }
 
 
@@ -656,16 +656,64 @@ void handleMode(Client* client, std::vector<std::string> params, std::vector<Cha
 
 
 void handleKick(Client* client, std::vector<std::string> params, std::vector<Channel>& channels) {
-    if (params.size() < 3)
+    if (params.size() < 2)
     {
-        sendReply(client, 461, "Not enough parameters", "TOPIC");
+        sendReply(client, 461, "Not enough parameters", "KICK");
         return;
     }
     if (params[0][0] != '#')
     {
-        sendReply(client, 476, "Channel name should start with #", "TOPIC");
+        sendReply(client, 476, "Channel name should start with #", "KICK");
         return;
-    for
+    }
+    std::string targetChannel = params[0];
+    std::string targetUser = params[1];
+    for (size_t i = 0; i < channels.size(); i++)
+    {
+        if (channels[i].getName() == targetChannel)
+        {
+            if (channels[i].isMember(client))
+            {
+                if (channels[i].isOperator(client))
+                {
+                    std::vector<Client*> members = channels[i].getMembers();
+                    for (size_t i = 0; i < members.size(); i++)
+                    {
+                        if (members[i]->getNickname() == targetUser)
+                        {
+                            std::string msgReply;
+                            if (params.size() == 2)
+                                msgReply = ":" + client->getNickname() + "!" + client->getUsername() + "@localhost KICK " + params[0] + " " + params[1] + "\r\n";
+                            else
+                                msgReply = ":" + client->getNickname() + "!" + client->getUsername() + "@localhost KICK " + params[0] + " " + params[1] + " :" + params[2] + "\r\n";
+
+                            for (size_t j = 0; j < members.size(); j++){
+                                send(members[j]->getFd(), msgReply.c_str(), msgReply.size(), 0);
+                            }
+                            channels[i].removeOperator(members[i]);
+                            channels[i].removeMember(members[i]);
+                            return;
+                        }
+                    }
+                    sendReply(client, 441, "Target client not on this channel", "KICK");
+                    return;
+                }
+                else
+                {
+                    sendReply(client, 482, "You're not channel operator", "KICK");
+                    return;
+                }
+
+            }
+            else
+            {
+                sendReply(client, 442, "You are not on that channel", "KICK");
+                return;
+            }
+        }
+    }
+    sendReply(client, 403, "Channel doesn't exist", "KICK");
+    return;
 }
 
 

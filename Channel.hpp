@@ -36,6 +36,7 @@ class Channel {
         void setTopicRestricted(bool v);
         void addOperator(Client* client);
         void removeOperator(Client* client);
+        void removeMember(Client* client);
 
 
         void addToInviteList(Client* client);
