@@ -655,7 +655,7 @@ void handleMode(Client* client, std::vector<std::string> params, std::vector<Cha
 
 
 
-void handleKick(Client* client, std::vector<std::string> params) {
+void handleKick(Client* client, std::vector<std::string> params, std::vector<Channel>& channels) {
     if (params.size() < 3)
     {
         sendReply(client, 461, "Not enough parameters", "TOPIC");
@@ -665,8 +665,7 @@ void handleKick(Client* client, std::vector<std::string> params) {
     {
         sendReply(client, 476, "Channel name should start with #", "TOPIC");
         return;
-    }
-    
+    for
 }
 
 
@@ -729,7 +728,7 @@ void Server::handelCommand(command cmd, Client* client){
     else if (cmd.command == "MODE")
         handleMode(client, cmd.params, _channels);
     else if (cmd.command == "KICK")
-        handleKick(client, cmd.params);
+        handleKick(client, cmd.params, _channels);
     else if (cmd.command == "INVITE")
         handleInvite(client, cmd.params);
 }
