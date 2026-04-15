@@ -743,8 +743,17 @@ void handleInvite(Client* client, std::vector<std::string> params, std::vector<C
                     {
                         if (clients[i]->getNickname() == targetClientNick)
                         {
-                            
-                            
+                            if (channels[i].isMember(clients[i]))
+                            {
+                                sendReply(client, 443, "Already member", "INVITE");
+                                return;
+                            }
+                            channels[i].addToInviteList(clients[i]);
+                            std::string senderMsg = ":server 341" + client->getNickname() + " " + targetClientNick + " " + targetChannel + "\r\n";
+                            send(client->getFd(), senderMsg.c_str(), senderMsg.size(), 0);
+                            std::string msgReply = ":" + client->getNickname() + "!" + client->getUsername() + "@localhost INVITE " + targetClientNick + " " + targetChannel + "\r\n";
+                            send(client->getFd(), msgReply.c_str(), msgReply.size(), 0);
+                            return;
                         }
                     }
                     sendReply(client, 401, "Target client not found", "INVITE");
