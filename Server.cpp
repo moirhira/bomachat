@@ -726,45 +726,37 @@ void handleInvite(Client* client, std::vector<std::string> params, std::vector<C
     }
     std::string targetClientNick = params[0];
     std::string targetChannel = params[1]; 
-    if (targetChannel[0] != '#')
-    {
-        sendReply(client, 476, "Channel name should start with #", "INVITE");
-        return;
-    }
+    
     for (size_t i = 0; i < channels.size(); i++)
     {
         if (channels[i].getName() == targetChannel)
         {
             if (channels[i].isMember(client))
             {
-                if (channels[i].isOperator(client))
-                {
-                    for (size_t i = 0; i < clients.size(); i++)
-                    {
-                        if (clients[i]->getNickname() == targetClientNick)
-                        {
-                            if (channels[i].isMember(clients[i]))
-                            {
-                                sendReply(client, 443, "Already member", "INVITE");
-                                return;
-                            }
-                            channels[i].addToInviteList(clients[i]);
-                            std::string senderMsg = ":server 341" + client->getNickname() + " " + targetClientNick + " " + targetChannel + "\r\n";
-                            send(client->getFd(), senderMsg.c_str(), senderMsg.size(), 0);
-                            std::string msgReply = ":" + client->getNickname() + "!" + client->getUsername() + "@localhost INVITE " + targetClientNick + " " + targetChannel + "\r\n";
-                            send(client->getFd(), msgReply.c_str(), msgReply.size(), 0);
-                            return;
-                        }
-                    }
-                    sendReply(client, 401, "Target client not found", "INVITE");
-                    return;
-                }
-                else
+                if (channels[i].isInviteOnly() && !channels[i].isOperator(client))
                 {
                     sendReply(client, 482, "You're not channel operator", "INVITE");
                     return;
                 }
-
+                for (size_t j = 0; j < clients.size(); j++)
+                {
+                    if (clients[j]->getNickname() == targetClientNick)
+                    {
+                        if (channels[i].isMember(clients[j]))
+                        {
+                            sendReply(client, 443, targetClientNick + " " + targetChannel + " :is already on channel", "INVITE");
+                            return;
+                        }
+                        channels[i].addToInviteList(clients[j]);
+                        std::string senderMsg = ":server 341 " + client->getNickname() + " " + targetClientNick + " " + targetChannel + "\r\n";
+                        send(client->getFd(), senderMsg.c_str(), senderMsg.size(), 0);
+                        std::string msgReply = ":" + client->getNickname() + "!" + client->getUsername() + "@localhost INVITE " + targetClientNick + " " + targetChannel + "\r\n";
+                        send(clients[j]->getFd(), msgReply.c_str(), msgReply.size(), 0);
+                        return;
+                    }
+                }
+                sendReply(client, 401, targetClientNick + " :No such nick", "INVITE");
+                return;
             }
             else
             {
