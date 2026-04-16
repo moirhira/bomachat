@@ -15,6 +15,7 @@
 #include <iomanip>
 #include "Channel.hpp"
 #include <fcntl.h>
+#include <errno.h>
 
 struct command
 {
