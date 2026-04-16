@@ -166,7 +166,6 @@ void sendReply(Client* client, int errorCode, std::string errorMsg, std::string 
     send(client->getFd(), reply.c_str(),reply.size(), 0);
 }
 
-
 void handlePass(Client* client, std::vector<std::string> params, std::string password) {
     if (params.size() < 1)
     {
@@ -726,47 +725,55 @@ void handleInvite(Client* client, std::vector<std::string> params, std::vector<C
     }
     std::string targetClientNick = params[0];
     std::string targetChannel = params[1]; 
-    
+
+    Client* target = NULL;
+    for (size_t j = 0; j < clients.size(); j++)
+    {
+        if (clients[j]->getNickname() == targetClientNick)
+        {
+            target = clients[j];
+            break;
+        }
+    }
+    if (!target)
+    {
+        sendReply(client, 401, "No such nick", "INVITE");
+        return;
+    }
+
     for (size_t i = 0; i < channels.size(); i++)
     {
         if (channels[i].getName() == targetChannel)
         {
-            if (channels[i].isMember(client))
-            {
-                if (channels[i].isInviteOnly() && !channels[i].isOperator(client))
-                {
-                    sendReply(client, 482, "You're not channel operator", "INVITE");
-                    return;
-                }
-                for (size_t j = 0; j < clients.size(); j++)
-                {
-                    if (clients[j]->getNickname() == targetClientNick)
-                    {
-                        if (channels[i].isMember(clients[j]))
-                        {
-                            sendReply(client, 443, targetClientNick + " " + targetChannel + " :is already on channel", "INVITE");
-                            return;
-                        }
-                        channels[i].addToInviteList(clients[j]);
-                        std::string senderMsg = ":server 341 " + client->getNickname() + " " + targetClientNick + " " + targetChannel + "\r\n";
-                        send(client->getFd(), senderMsg.c_str(), senderMsg.size(), 0);
-                        std::string msgReply = ":" + client->getNickname() + "!" + client->getUsername() + "@localhost INVITE " + targetClientNick + " " + targetChannel + "\r\n";
-                        send(clients[j]->getFd(), msgReply.c_str(), msgReply.size(), 0);
-                        return;
-                    }
-                }
-                sendReply(client, 401, targetClientNick + " :No such nick", "INVITE");
-                return;
-            }
-            else
+            if (!channels[i].isMember(client))
             {
                 sendReply(client, 442, "You are not on that channel", "INVITE");
                 return;
             }
+
+            if (!channels[i].isOperator(client))
+            {
+                sendReply(client, 482, "You're not channel operator", "INVITE");
+                return;
+            }
+                
+            if (channels[i].isMember(target))
+            {
+                sendReply(client, 443,targetClientNick + " :is already on channel", "INVITE");
+                return;
+            }        
+                
+            channels[i].addToInviteList(target);
+
+            std::string senderMsg = ":server 341 " + client->getNickname() + " " + targetClientNick + " " + targetChannel + "\r\n";
+            send(client->getFd(), senderMsg.c_str(), senderMsg.size(), 0);
+            std::string msgReply = ":" + client->getNickname() + "!" + client->getUsername() + "@localhost INVITE " + targetClientNick + " " + targetChannel + "\r\n";
+            send(target->getFd(), msgReply.c_str(), msgReply.size(), 0);
+
+            return;
         }
     }
-    sendReply(client, 403, "Channel doesn't exist", "INVITE");
-    return;
+    sendReply(client, 403, "No such channel", "INVITE");
 }
 
 
