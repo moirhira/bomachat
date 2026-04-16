@@ -56,7 +56,12 @@ int Server::init()
         perror("listen faild: ");
         return 1;
     }
-    fcntl(_sockfd, F_SETFL, O_NONBLOCK);
+    int flags = fcntl(_sockfd, F_GETFL, 0);
+    if (flags < 0 || fcntl(_sockfd, F_SETFL, flags | O_NONBLOCK) < 0)
+    {
+        perror("fcntl faild: ");
+        return 1;
+    }
     return 0;
 }
 
@@ -111,12 +116,18 @@ void Server::acceptClient()
     int client_fd = accept(_sockfd, NULL, NULL);
     if (client_fd < 0)
     {
-        if (errno == EWOULDBLOCK && errno == EAGAIN)
+        if (errno == EWOULDBLOCK || errno == EAGAIN)
             return;
         perror("accept faild: ");
         return;
     }
-    fcntl(client_fd, F_SETFL, O_NONBLOCK);
+    int flags = fcntl(client_fd, F_GETFL, 0);
+    if (flags < 0 || fcntl(client_fd, F_SETFL, flags | O_NONBLOCK) < 0)
+    {
+        perror("fcntl faild: ");
+        close(client_fd);
+        return;
+    }
     if (_nfds >= 1024)
     {
         std::cerr << "Too many clients!" << std::endl;
