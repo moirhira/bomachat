@@ -874,3 +874,32 @@ void Server::handelClient(int& i) {
     }
     // printf("buffer now -> %s\n", getClientById(_fds[i].fd)->getBuffer().c_str());
 }
+
+
+
+
+
+//     else
+//     {
+//         // buffer[byts] = '\0';
+//         Client* curClient = getClientById(_fds[i].fd);
+//         if (!curClient)
+//             return;
+//         curClient->appendToBuffer(buffer);
+//         std::string& cmdLine = curClient->getBuffer();
+//         size_t pos;
+//         while ((pos = cmdLine.find('\r\n')) != std::string::npos)
+//         {
+//             std::string line = cmdLine.substr(0, pos);
+//             cmdLine.erase(0, pos + 2);
+//             if (!line.empty())
+//                 line.erase(line.size() -1);
+//             std::cout << "Received command: " << line << std::endl;
+//             command cmd = parseCommand(line);
+//             std::cout << "Parsed command: " << cmd.command << std::endl;
+//             handelCommand(cmd, curClient);
+//         }
+//         // std::memset(buffer, 0, sizeof(buffer));
+//     }
+//     // printf("buffer now -> %s\n", getClientById(_fds[i].fd)->getBuffer().c_str());
+// }
