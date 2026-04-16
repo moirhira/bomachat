@@ -14,6 +14,7 @@
 #include <sstream>
 #include <iomanip>
 #include "Channel.hpp"
+#include <fcntl.h>
 
 struct command
 {

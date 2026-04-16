@@ -84,6 +84,7 @@ Client* Server::getClientById(int id) {
 
 void Server::acceptClient() {
     int client_fd = accept(_sockfd, NULL, NULL);
+    fcntl(client_fd, F_SETFL, O_NONBLOCK);
     if (client_fd < 0)
     {
         perror("accept faild: ");
@@ -838,6 +839,8 @@ void Server::handelClient(int& i) {
     int byts = recv(_fds[i].fd, buffer, sizeof(buffer) - 1, 0);
     if (byts <= 0)
     {
+        if (errno == EAGAIN || errno == EWOULDBLOCK)
+            return;
         int fd = _fds[i].fd;
         close(fd);
         _fds[i] = _fds[_nfds - 1];
