@@ -35,7 +35,6 @@ class Client {
         void appendToBuffer(std::string data);
         void clearBuffer();
 
-        void queueMessage(const std::string &msg);
         void sendMessage(const std::string& msg);
         std::string &getOutBuffer();
         const std::string &getOutBuffer() const;

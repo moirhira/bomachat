@@ -1,7 +1,9 @@
 #include "Server.hpp"
+#include <signal.h>
 
 
 int main(int ac, char **av){
+    signal(SIGPIPE, SIG_IGN);
     if (ac != 3)
     {
         std::cerr << "Usage : ./server <port> <password>" << std::endl;

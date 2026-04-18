@@ -64,6 +64,7 @@ void Client::clearBuffer() {
     _buffer.clear();
 }
 
+
 void Client::sendMessage(const std::string& msg) {
     _outBuffer += msg;
 }
@@ -72,9 +73,17 @@ std::string &Client::getOutBuffer() {
     return _outBuffer;
 }
 
+const std::string &Client::getOutBuffer() const {
+    return _outBuffer;
+}
+
 
 bool Client::hasPendingOutput() const {
     return !_outBuffer.empty();
+}
+
+bool Client::hasPendingMessages() const {
+    return hasPendingOutput();
 }
 
 short Client::getClientEvents() const {

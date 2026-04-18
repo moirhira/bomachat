@@ -74,8 +74,7 @@ int Server::init()
         perror("listen faild: ");
         return 1;
     }
-    int flags = fcntl(_sockfd, F_GETFL, 0);
-    if (flags < 0 || fcntl(_sockfd, F_SETFL, flags | O_NONBLOCK) < 0)
+    if (fcntl(_sockfd, F_SETFL, O_NONBLOCK) < 0)
     {
         perror("fcntl faild: ");
         return 1;
@@ -108,7 +107,7 @@ void Server::run()
         }
         for (int i = 0; i < _nfds; i++)
         {
-            if (_fds[i].revents & (POLLERR | POLLHUP))
+            if (_fds[i].revents & (POLLERR | POLLHUP | POLLNVAL))
             {
                 disconnectClient(i);
                 continue;
@@ -177,8 +176,7 @@ void Server::acceptClient()
         perror("accept faild: ");
         return;
     }
-    int flags = fcntl(client_fd, F_GETFL, 0);
-    if (flags < 0 || fcntl(client_fd, F_SETFL, flags | O_NONBLOCK) < 0)
+    if (fcntl(client_fd, F_SETFL, O_NONBLOCK) < 0)
     {
         perror("fcntl faild: ");
         close(client_fd);
