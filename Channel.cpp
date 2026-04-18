@@ -73,6 +73,17 @@ void Channel::removeMember(Client* client) {
     }
 }
 
+void Channel::removeFromInviteList(Client* client) {
+    for (size_t i = 0; i < _inviteLst.size(); i++)
+    {
+        if (_inviteLst[i] == client)
+        {
+            _inviteLst.erase(_inviteLst.begin() + i);
+            break;
+        }
+    }
+}
+
 bool Channel::isMember(Client* client) {
    for (size_t i = 0; i < _members.size(); i++)
     {
@@ -135,6 +146,6 @@ void Channel::removeClientEverywhere(Client* client) {
     }
 }
 
-bool Channel::isEmpty() {
+bool Channel::isEmpty() const {
     return _members.empty();
 }

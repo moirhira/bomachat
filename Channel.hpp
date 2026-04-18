@@ -40,6 +40,7 @@ class Channel {
 
 
         void addToInviteList(Client* client);
+        void removeFromInviteList(Client* client);
         void addMember(Client* client);
         bool isMember(Client* client);
         bool isOperator(Client* client);
@@ -48,7 +49,7 @@ class Channel {
         bool isTopicRestricted();
 
         void removeClientEverywhere(Client* client);
-        bool isEmpty();
+        bool isEmpty() const;
         
 
 };

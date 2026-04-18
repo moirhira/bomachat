@@ -19,6 +19,24 @@ void Server::disconnectClient(int &i)
     _fds[i] = _fds[_nfds - 1];
     _nfds--;
     i--;
+    Client* client = getClientById(fd);
+    if (client)
+    {
+        for (size_t c = 0; c < _channels.size(); c++)
+        {
+            _channels[c].removeClientEverywhere(client);
+        }
+    }
+
+    for (size_t c = 0; c < _channels.size(); c++)
+    {
+        if (_channels[c].isEmpty())
+        {
+            _channels.erase(_channels.begin() + c);
+            c--;
+        }
+    }
+
     for (size_t j = 0; j < _clients.size(); j++)
     {
         if (_clients[j]->getFd() == fd)
