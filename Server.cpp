@@ -22,6 +22,23 @@ void Server::disconnectClient(int &i)
     Client* client = getClientById(fd);
     if (client)
     {
+        std::string quitMsg = ":" + client->getNickname() + "!" + client->getUsername() + "@localhost QUIT :connection closed\r\n";
+
+        for(size_t c = 0; c < _channels.size(); c++)
+        {
+            if (_channels[c].isMember(client))
+            {
+                std::vector<Client*> members = _channels[c].getMembers();
+                for (size_t j = 0; j < members.size(); j++)
+                {
+                    if (members[j]->getFd() != fd)
+                    {
+                        members[j]->sendMessage(quitMsg);
+                    }
+                }
+
+            }
+        }
         for (size_t c = 0; c < _channels.size(); c++)
         {
             _channels[c].removeClientEverywhere(client);
@@ -185,6 +202,12 @@ void Server::acceptClient()
             return;
         }
         perror("accept faild: ");
+        return;
+    }
+    if (client_fd >= 1024)
+    {
+        std::cerr << "FD limit reached, refusing connections" << std::endl;
+        close(client_fd);
         return;
     }
     if (fcntl(client_fd, F_SETFL, O_NONBLOCK) < 0)

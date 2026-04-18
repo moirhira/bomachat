@@ -30,7 +30,7 @@ class Server {
         std::vector<Client*> _clients;
         int _port;
         std::string _password;
-        struct pollfd _fds[1024];
+        struct pollfd _fds[2000];
         int _nfds;
         std::vector<Channel> _channels;
     public:
