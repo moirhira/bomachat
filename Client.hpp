@@ -1,7 +1,7 @@
 #ifndef CLIENRT_HPP
 #define CLIENRT_HPP
 #include <string>
-
+#include <poll.h>
 
 class Client {
     private:
@@ -38,6 +38,7 @@ class Client {
         void sendMessage(const std::string& msg);
         std::string getOutBuffer();
         bool hasPendingMessages() const;
+        short getClientEvents(Client *client) const;
 
 };
 

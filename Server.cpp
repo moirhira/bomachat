@@ -86,6 +86,27 @@ void Server::run()
                 disconnectClient(i);
                 continue;
             }
+            if (_fds[i].revents & POLLOUT)
+            {
+                Client* client = getClientById(_fds[i].fd);
+                if (!client)
+                    continue;
+                
+                std::string out  = client->getOutBuffer();
+
+                size_t sent = send(client->getFd(), out.c_str(), out.size(), 0);
+
+                if (sent > 0)
+                {
+                    out.erase(0, sent);
+                }
+                else if (sent < 0)
+                {
+                    if (errno == EWOULDBLOCK || errno == EAGAIN)
+                        continue;
+                    disconnectClient(i);
+                }
+            }
             if (_fds[i].revents & POLLIN)
             {
                 if (_fds[i].fd == _sockfd)
@@ -136,7 +157,7 @@ void Server::acceptClient()
     }
     _clients.push_back(new Client(client_fd));
     _fds[_nfds].fd = client_fd;
-    _fds[_nfds].events = POLLIN;
+    _fds[_nfds].events = _clients.back()->getClientEvents(_clients.back());
     _nfds++;
     std::cout << "new client connected" << std::endl;
 }

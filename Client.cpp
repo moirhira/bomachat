@@ -75,3 +75,12 @@ std::string Client::getOutBuffer() {
 bool Client::hasPendingMessages() const { 
     return !_outBuffer.empty();
 }
+
+
+short Client::getClientEvents(Client *client) const {
+    short events = POLLIN;
+    if (client->hasPendingMessages()) {
+        events |= POLLOUT;
+    }
+    return events;
+}
