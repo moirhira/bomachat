@@ -12,6 +12,7 @@ class Client {
         bool _authenticated;
         bool _registred;
         std::string _buffer;
+        std::string _outBuffer;
 
     public:
         Client(int fd);
@@ -33,6 +34,10 @@ class Client {
         void setRegistered(bool value);
         void appendToBuffer(std::string data);
         void clearBuffer();
+
+        void sendMessage(const std::string& msg);
+        std::string getOutBuffer();
+        bool hasPendingMessages() const;
 
 };
 

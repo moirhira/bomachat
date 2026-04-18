@@ -90,11 +90,11 @@ void Server::run()
             {
                 if (_fds[i].fd == _sockfd)
                 {
-                    acceptClient();
+                    acceptClient(); // accept new client connection and add to _fds and _clients
                 }
                 else
                 {
-                    handelClient(i);
+                    handelClient(i); // handle incoming data from client, parse commands, and send responses
                 }
             }
         }

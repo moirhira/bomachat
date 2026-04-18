@@ -63,3 +63,15 @@ void Client::appendToBuffer(std::string data){
 void Client::clearBuffer() {
     _buffer.clear();
 }
+
+void Client::sendMessage(const std::string& msg) {
+    _outBuffer += msg;
+}
+
+std::string Client::getOutBuffer() {
+    return _outBuffer;
+}
+
+bool Client::hasPendingMessages() const { 
+    return !_outBuffer.empty();
+}
