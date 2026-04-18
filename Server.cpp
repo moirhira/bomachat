@@ -198,7 +198,7 @@ void sendReply(Client *client, int errorCode, std::string errorMsg, std::string 
     std::ostringstream oss;
     oss << std::setw(3) << std::setfill('0') << errorCode;
     std::string reply = ":server " + oss.str() + " " + nick + " " + cmd + " :" + errorMsg + "\r\n";
-    send(client->getFd(), reply.c_str(), reply.size(), 0);
+    client->sendMessage(reply);
 }
 
 void handlePass(Client *client, std::vector<std::string> params, std::string password)
@@ -300,7 +300,7 @@ void handleUser(Client *client, const std::vector<std::string> params)
 static void sendJoinReply(Client *client, Channel &channel)
 {
     std::string joinMsg = ":" + client->getNickname() + "!" + client->getUsername() + "@host JOIN " + channel.getName() + "\r\n";
-    send(client->getFd(), joinMsg.c_str(), joinMsg.size(), 0);
+    client->sendMessage(joinMsg);
 
     std::string nick = client->getNickname();
     std::string channnelName = channel.getName();
@@ -308,12 +308,12 @@ static void sendJoinReply(Client *client, Channel &channel)
     if (!channel.getTopic().empty())
     {
         std::string topicReply = ":server 332 " + nick + " " + channnelName + " :" + channel.getTopic() + "\r\n";
-        send(client->getFd(), topicReply.c_str(), topicReply.size(), 0);
+        client->sendMessage(topicReply);
     }
     else
     {
         std::string noTopic = ":server 331 " + nick + " " + channnelName + " :NO topic is set\r\n";
-        send(client->getFd(), noTopic.c_str(), noTopic.size(), 0);
+        client->sendMessage(noTopic);
     }
 
     std::string namesList = ":server 353 " + nick + " = " + channnelName + " :";
@@ -328,10 +328,10 @@ static void sendJoinReply(Client *client, Channel &channel)
     }
 
     namesList += "\r\n";
-    send(client->getFd(), namesList.c_str(), namesList.size(), 0);
+    client->sendMessage(namesList);
 
     std::string endNames = ":server 366 " + nick + " " + channnelName + " :End of /NAMES list\r\n";
-    send(client->getFd(), endNames.c_str(), endNames.size(), 0);
+    client->sendMessage(endNames);
 }
 
 void handleJoin(Client *client, std::vector<std::string> params, std::vector<Channel> &channels)
@@ -421,7 +421,7 @@ void handlePrivmsg(Client *client, std::vector<std::string> params, std::vector<
                     if (client->getFd() != members[j]->getFd())
                     {
                         std::string prvMsg = ":" + client->getNickname() + "!" + client->getUsername() + "@<host> PRIVMSG " + target + " :" + msg + "\r\n";
-                        send(members[j]->getFd(), prvMsg.c_str(), prvMsg.size(), 0);
+                        members[j]->sendMessage(prvMsg);
                     }
                 }
                 return;
@@ -438,7 +438,7 @@ void handlePrivmsg(Client *client, std::vector<std::string> params, std::vector<
             std::string prvMsg = ":" + client->getNickname() + "!" +
                                  client->getUsername() + "@localhost PRIVMSG " +
                                  target + " :" + msg + "\r\n";
-            send(clients[i]->getFd(), prvMsg.c_str(), prvMsg.size(), 0);
+            clients[i]->sendMessage(prvMsg);
             return;
         }
     }
@@ -484,7 +484,7 @@ void handleTopic(Client *client, std::vector<std::string> params, std::vector<Ch
             std::vector<Client *> members = channels[i].getMembers();
             for (size_t j = 0; j < channels[i].getMembers().size(); j++)
             {
-                send(members[j]->getFd(), topicMsg.c_str(), topicMsg.size(), 0);
+                members[j]->sendMessage(topicMsg);
             }
             return;
         }
@@ -539,7 +539,7 @@ void handleMode(Client *client, std::vector<std::string> params, std::vector<Cha
                 std::vector<Client *> members = channels[i].getMembers();
                 for (size_t j = 0; j < channels[i].getMembers().size(); j++)
                 {
-                    send(members[j]->getFd(), msgReply.c_str(), msgReply.size(), 0);
+                    members[j]->sendMessage(msgReply);
                 }
                 break;
             }
@@ -563,7 +563,7 @@ void handleMode(Client *client, std::vector<std::string> params, std::vector<Cha
                 {
                     std::string nick = client->getNickname().empty() ? "*" : client->getNickname();
                     std::string reply = ":server 441 " + nick + " " + params[2] + " " + params[0] + " :They aren't on that channel\r\n";
-                    send(client->getFd(), reply.c_str(), reply.size(), 0);
+                    client->sendMessage(reply);
                     return;
                 }
                 if (sign == '+')
@@ -573,7 +573,7 @@ void handleMode(Client *client, std::vector<std::string> params, std::vector<Cha
                     std::vector<Client *> members = channels[i].getMembers();
                     for (size_t j = 0; j < channels[i].getMembers().size(); j++)
                     {
-                        send(members[j]->getFd(), msgReply.c_str(), msgReply.size(), 0);
+                        members[j]->sendMessage(msgReply);
                     }
                     break;
                 }
@@ -584,7 +584,7 @@ void handleMode(Client *client, std::vector<std::string> params, std::vector<Cha
                     std::vector<Client *> members = channels[i].getMembers();
                     for (size_t j = 0; j < channels[i].getMembers().size(); j++)
                     {
-                        send(members[j]->getFd(), msgReply.c_str(), msgReply.size(), 0);
+                        members[j]->sendMessage(msgReply);
                     }
                     break;
                 }
@@ -628,7 +628,7 @@ void handleMode(Client *client, std::vector<std::string> params, std::vector<Cha
                 std::vector<Client *> members = channels[i].getMembers();
                 for (size_t j = 0; j < channels[i].getMembers().size(); j++)
                 {
-                    send(members[j]->getFd(), msgReply.c_str(), msgReply.size(), 0);
+                    members[j]->sendMessage(msgReply);
                 }
                 break;
             }
@@ -652,7 +652,7 @@ void handleMode(Client *client, std::vector<std::string> params, std::vector<Cha
                 std::vector<Client *> members = channels[i].getMembers();
                 for (size_t j = 0; j < channels[i].getMembers().size(); j++)
                 {
-                    send(members[j]->getFd(), msgReply.c_str(), msgReply.size(), 0);
+                    members[j]->sendMessage(msgReply);
                 }
                 break;
             }
@@ -666,7 +666,7 @@ void handleMode(Client *client, std::vector<std::string> params, std::vector<Cha
                 std::vector<Client *> members = channels[i].getMembers();
                 for (size_t j = 0; j < channels[i].getMembers().size(); j++)
                 {
-                    send(members[j]->getFd(), msgReply.c_str(), msgReply.size(), 0);
+                    members[j]->sendMessage(msgReply);
                 }
                 break;
             }
@@ -716,7 +716,7 @@ void handleKick(Client *client, std::vector<std::string> params, std::vector<Cha
 
                             for (size_t j = 0; j < members.size(); j++)
                             {
-                                send(members[j]->getFd(), msgReply.c_str(), msgReply.size(), 0);
+                                members[j]->sendMessage(msgReply);
                             }
                             channels[i].removeOperator(members[i]);
                             channels[i].removeMember(members[i]);
@@ -793,9 +793,9 @@ void handleInvite(Client *client, std::vector<std::string> params, std::vector<C
             channels[i].addToInviteList(target);
 
             std::string senderMsg = ":server 341 " + client->getNickname() + " " + targetClientNick + " " + targetChannel + "\r\n";
-            send(client->getFd(), senderMsg.c_str(), senderMsg.size(), 0);
+            client->sendMessage(senderMsg);
             std::string msgReply = ":" + client->getNickname() + "!" + client->getUsername() + "@localhost INVITE " + targetClientNick + " " + targetChannel + "\r\n";
-            send(target->getFd(), msgReply.c_str(), msgReply.size(), 0);
+            target->sendMessage(msgReply);
 
             return;
         }
@@ -823,12 +823,12 @@ void Server::handelCommand(command cmd, Client *client)
         if (sub == "LS")
         {
             std::string reply = ":server CAP * LS :\r\n";
-            send(client->getFd(), reply.c_str(), reply.size(), 0);
+            client->sendMessage(reply);
         }
         else if (sub == "REQ" && cmd.params.size() > 1)
         {
             std::string reply = ":server CAP * NAK :" + cmd.params[1] + "\r\n";
-            send(client->getFd(), reply.c_str(), reply.size(), 0);
+            client->sendMessage(reply);
         }
     }
     else if (cmd.command == "PING")
@@ -837,7 +837,7 @@ void Server::handelCommand(command cmd, Client *client)
         if (!cmd.params.empty())
             token = cmd.params[0];
         std::string reply = ":server PONG server :" + token + "\r\n";
-        send(client->getFd(), reply.c_str(), reply.size(), 0);
+        client->sendMessage(reply);
     }
     else if (cmd.command == "PONG")
         return;
