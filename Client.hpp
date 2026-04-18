@@ -35,10 +35,13 @@ class Client {
         void appendToBuffer(std::string data);
         void clearBuffer();
 
+        void queueMessage(const std::string &msg);
         void sendMessage(const std::string& msg);
-        std::string getOutBuffer();
+        std::string &getOutBuffer();
+        const std::string &getOutBuffer() const;
+        bool hasPendingOutput() const;
         bool hasPendingMessages() const;
-        short getClientEvents(Client *client) const;
+        short getClientEvents() const;
 
 };
 

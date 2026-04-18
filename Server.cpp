@@ -74,6 +74,15 @@ void Server::run()
 
     while (1)
     {
+        for (int i = 1; i < _nfds; i++)
+        {
+            Client *client = getClientById(_fds[i].fd);
+            if (client)
+                _fds[i].events = client->getClientEvents();
+            else
+                _fds[i].events = POLLIN;
+        }
+
         if (poll(_fds, _nfds, -1) < 0)
         {
             perror("poll faild: ");
@@ -91,31 +100,39 @@ void Server::run()
                 Client* client = getClientById(_fds[i].fd);
                 if (!client)
                     continue;
-                
-                std::string out  = client->getOutBuffer();
 
-                size_t sent = send(client->getFd(), out.c_str(), out.size(), 0);
+                std::string &out = client->getOutBuffer();
+                if (out.empty())
+                    continue;
+
+                ssize_t sent = send(client->getFd(), out.c_str(), out.size(), 0);
 
                 if (sent > 0)
                 {
-                    out.erase(0, sent);
+                    out.erase(0, static_cast<size_t>(sent));
                 }
                 else if (sent < 0)
                 {
                     if (errno == EWOULDBLOCK || errno == EAGAIN)
                         continue;
                     disconnectClient(i);
+                    continue;
+                }
+                else
+                {
+                    disconnectClient(i);
+                    continue;
                 }
             }
             if (_fds[i].revents & POLLIN)
             {
                 if (_fds[i].fd == _sockfd)
                 {
-                    acceptClient(); // accept new client connection and add to _fds and _clients
+                    acceptClient();
                 }
                 else
                 {
-                    handelClient(i); // handle incoming data from client, parse commands, and send responses
+                    handelClient(i);
                 }
             }
         }
@@ -157,7 +174,7 @@ void Server::acceptClient()
     }
     _clients.push_back(new Client(client_fd));
     _fds[_nfds].fd = client_fd;
-    _fds[_nfds].events = _clients.back()->getClientEvents(_clients.back());
+    _fds[_nfds].events = _clients.back()->getClientEvents();
     _nfds++;
     std::cout << "new client connected" << std::endl;
 }

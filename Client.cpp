@@ -68,18 +68,18 @@ void Client::sendMessage(const std::string& msg) {
     _outBuffer += msg;
 }
 
-std::string Client::getOutBuffer() {
+std::string &Client::getOutBuffer() {
     return _outBuffer;
 }
 
-bool Client::hasPendingMessages() const { 
+
+bool Client::hasPendingOutput() const {
     return !_outBuffer.empty();
 }
 
-
-short Client::getClientEvents(Client *client) const {
+short Client::getClientEvents() const {
     short events = POLLIN;
-    if (client->hasPendingMessages()) {
+    if (hasPendingOutput()) {
         events |= POLLOUT;
     }
     return events;
