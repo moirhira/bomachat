@@ -121,3 +121,20 @@ bool Channel::isInviteOnly() {
 bool Channel::isTopicRestricted() {
     return _topicRestricted;
 }
+
+void Channel::removeClientEverywhere(Client* client) {
+    removeMember(client);
+    removeOperator(client);
+    for (size_t i = 0; i < _inviteLst.size(); i++)
+    {
+        if (_inviteLst[i] == client)
+        {
+            _inviteLst.erase(_inviteLst.begin() + i);
+            break;
+        }
+    }
+}
+
+bool Channel::isEmpty() {
+    return _members.empty();
+}

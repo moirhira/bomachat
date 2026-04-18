@@ -47,6 +47,8 @@ class Channel {
         bool isInviteOnly();
         bool isTopicRestricted();
 
+        void removeClientEverywhere(Client* client);
+        bool isEmpty();
         
 
 };
