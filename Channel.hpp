@@ -50,8 +50,6 @@ class Channel {
 
         void removeClientEverywhere(Client* client);
         bool isEmpty() const;
-        
-
 };
 
 

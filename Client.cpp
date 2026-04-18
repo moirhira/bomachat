@@ -82,10 +82,6 @@ bool Client::hasPendingOutput() const {
     return !_outBuffer.empty();
 }
 
-bool Client::hasPendingMessages() const {
-    return hasPendingOutput();
-}
-
 short Client::getClientEvents() const {
     short events = POLLIN;
     if (hasPendingOutput()) {

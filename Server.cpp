@@ -168,23 +168,28 @@ Client *Server::getClientById(int id)
 
 void Server::acceptClient()
 {
+    if (_nfds >= 1024)
+    {
+        std::cerr << "Max clients reached, skipping accept" << std::endl;
+        return;
+    }
     int client_fd = accept(_sockfd, NULL, NULL);
     if (client_fd < 0)
     {
         if (errno == EWOULDBLOCK || errno == EAGAIN)
             return;
+        
+        if (errno == EMFILE)
+        {
+            std::cerr << "FD limit reached, refusing connections" << std::endl;
+            return;
+        }
         perror("accept faild: ");
         return;
     }
     if (fcntl(client_fd, F_SETFL, O_NONBLOCK) < 0)
     {
         perror("fcntl faild: ");
-        close(client_fd);
-        return;
-    }
-    if (_nfds >= 1024)
-    {
-        std::cerr << "Too many clients!" << std::endl;
         close(client_fd);
         return;
     }
