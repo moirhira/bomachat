@@ -540,14 +540,15 @@ void handleKick(Client *client, std::vector<std::string> params, std::vector<Cha
     {
         if (channels[i].getName() == targetChannel)
         {
-            if (channels[i].isMember(client))
+            Channel &channel = channels[i];
+            if (channel.isMember(client))
             {
-                if (channels[i].isOperator(client))
+                if (channel.isOperator(client))
                 {
-                    std::vector<Client *> members = channels[i].getMembers();
-                    for (size_t i = 0; i < members.size(); i++)
+                    std::vector<Client *> members = channel.getMembers();
+                    for (size_t m = 0; m < members.size(); m++)
                     {
-                        if (members[i]->getNickname() == targetUser)
+                        if (members[m]->getNickname() == targetUser)
                         {
                             std::string msgReply;
                             if (params.size() == 2)
@@ -559,9 +560,9 @@ void handleKick(Client *client, std::vector<std::string> params, std::vector<Cha
                             {
                                 members[j]->sendMessage(msgReply);
                             }
-                            channels[i].removeOperator(members[i]);
-                            channels[i].removeMember(members[i]);
-                            channels[i].removeFromInviteList(members[i]);
+                            channel.removeOperator(members[m]);
+                            channel.removeMember(members[m]);
+                            channel.removeFromInviteList(members[m]);
                             return;
                         }
                     }
