@@ -313,7 +313,7 @@ void Server::handelCommand(command cmd, Client *client)
     else if (cmd.command == "PASS")
         handlePass(client, cmd.params, _password);
     else if (cmd.command == "NICK")
-        handleNick(client, cmd.params, _clients), _channels;
+        handleNick(client, cmd.params, _clients, _channels);
     else if (cmd.command == "USER")
         handleUser(client, cmd.params);
     else if (cmd.command == "JOIN")
@@ -329,6 +329,8 @@ void Server::handelCommand(command cmd, Client *client)
     else if (cmd.command == "INVITE")
         handleInvite(client, cmd.params, _channels, _clients);
 }
+
+
 void Server::handelClient(int &i)
 {
     char buffer[1024];

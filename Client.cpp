@@ -30,7 +30,7 @@ bool Client::isReg(){
     return _registred;
 }
 
-std::string& Client::getBuffer() const {
+std::string& Client::getBuffer() {
     return const_cast<std::string&>(_buffer);
 }
 

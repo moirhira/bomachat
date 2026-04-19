@@ -185,6 +185,8 @@ void handleJoin(Client *client, std::vector<std::string> params, std::vector<Cha
     {
         if (params[0] == channels[i].getName())
         {
+            if (channels[i].isMember(client))
+                return;
             if (channels[i].isInviteOnly() && !channels[i].isInvited(client))
             {
                 sendReply(client, 473, "You are not invited to this channel", params[0]);
@@ -208,8 +210,6 @@ void handleJoin(Client *client, std::vector<std::string> params, std::vector<Cha
                 sendReply(client, 471, "Channel is full", params[0]);
                 return;
             }
-            if (channels[i].isMember(client))
-                return;
             channels[i].addMember(client);
             sendJoinReply(client, channels[i]);
             return;
@@ -250,7 +250,7 @@ void handlePrivmsg(Client *client, std::vector<std::string> params, std::vector<
                 {
                     if (client->getFd() != members[j]->getFd())
                     {
-                        std::string prvMsg = ":" + client->getNickname() + "!" + client->getUsername() + "@<host> PRIVMSG " + target + " :" + msg + "\r\n";
+                        std::string prvMsg = ":" + client->getNickname() + "!" + client->getUsername() + "@localhost PRIVMSG " + target + " :" + msg + "\r\n";
                         members[j]->sendMessage(prvMsg);
                     }
                 }
@@ -446,7 +446,7 @@ void handleMode(Client *client, std::vector<std::string> params, std::vector<Cha
                         }
                     }
                     long newUserLimit = strtol(params[2].c_str(), NULL, 10);
-                    if (newUserLimit < 0 || newUserLimit >= 1024)
+                    if (newUserLimit <= 0 || newUserLimit >= 1024)
                     {
                         sendReply(client, 460, "User limit should be 1 >=  <= 1024", "MODE");
                         return;
@@ -550,6 +550,7 @@ void handleKick(Client *client, std::vector<std::string> params, std::vector<Cha
                             }
                             channels[i].removeOperator(members[i]);
                             channels[i].removeMember(members[i]);
+                            channels[i].removeFromInviteList(members[i]);
                             return;
                         }
                     }
