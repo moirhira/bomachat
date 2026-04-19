@@ -140,7 +140,7 @@ void handleUser(Client *client, const std::vector<std::string> params)
 
 static void sendJoinReply(Client *client, Channel &channel)
 {
-    std::string joinMsg = ":" + client->getNickname() + "!" + client->getUsername() + "@host JOIN " + channel.getName() + "\r\n";
+    std::string joinMsg = ":" + client->getNickname() + "!" + client->getUsername() + "@localhost JOIN " + channel.getName() + "\r\n";
     client->sendMessage(joinMsg);
 
     std::string nick = client->getNickname();

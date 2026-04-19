@@ -354,6 +354,12 @@ void Server::handelClient(int &i)
         if (!curClient)
             return;
         curClient->appendToBuffer(std::string(buffer, byts));
+        if (curClient->getBuffer().size() > 4096)
+        {
+            disconnectClient(i);
+            std::cout << "client disconnected (buffer overflow)" << std::endl;
+            return;
+        }
         std::string &cmdLine = curClient->getBuffer();
         size_t pos;
         while ((pos = cmdLine.find("\r\n")) != std::string::npos)
