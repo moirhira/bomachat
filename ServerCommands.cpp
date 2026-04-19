@@ -175,6 +175,20 @@ static void sendJoinReply(Client *client, Channel &channel)
     client->sendMessage(endNames);
 }
 
+bool isValidChannelName(const std::string& name)
+{
+    if (name.empty() || name[0] != '#' || name.size() == 1)
+        return false;
+    for (size_t i = 1;  i < name.size(); i++)
+    {
+        char c = name[i];
+
+        if (c == ' ' || c == ',' || c < 32 || c == 127)
+            return false;
+    }
+    return true;
+}
+
 void handleJoin(Client *client, std::vector<std::string> params, std::vector<Channel> &channels)
 {
     if (params.size() < 1)
@@ -187,9 +201,9 @@ void handleJoin(Client *client, std::vector<std::string> params, std::vector<Cha
         sendReply(client, 451, "You have not registered", "JOIN");
         return;
     }
-    if (params[0][0] != '#')
+    if (!isValidChannelName(params[0]))
     {
-        sendReply(client, 476, "Channel name should start with #", "JOIN");
+        sendReply(client, 476, "Channel name is invalid", "JOIN");
         return;
     }
     for (size_t i = 0; i < channels.size(); i++)
@@ -405,11 +419,14 @@ void handleMode(Client *client, std::vector<std::string> params, std::vector<Cha
                     std::string nick = client->getNickname().empty() ? "*" : client->getNickname();
                     std::string reply = ":server 441 " + nick + " " + params[2] + " " + params[0] + " :They aren't on that channel\r\n";
                     client->sendMessage(reply);
-                    return;
+                    return; 
                 }
                 if (sign == '+')
                 {
-                    channels[i].addOperator(targetClient);
+                    if (!channels[i].isOperator(targetClient))
+                    {
+                        channels[i].addOperator(targetClient);
+                    }
                     std::string msgReply = ":" + client->getNickname() + "!" + client->getUsername() + "@localhost MODE " + params[0] + " " + params[1] + " " + params[2] + "\r\n";
                     std::vector<Client *> members = channels[i].getMembers();
                     for (size_t j = 0; j < channels[i].getMembers().size(); j++)
