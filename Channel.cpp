@@ -149,3 +149,13 @@ void Channel::removeClientEverywhere(Client* client) {
 bool Channel::isEmpty() const {
     return _members.empty();
 }
+
+void Channel::brodcastMessage(const std::string& msg, Client* sender) {
+    for (size_t i = 0; i < _members.size(); i++)
+    {
+        if (_members[i] != sender)
+        {
+            _members[i]->sendMessage(msg);
+        }
+    }
+}

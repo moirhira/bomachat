@@ -50,6 +50,8 @@ class Channel {
 
         void removeClientEverywhere(Client* client);
         bool isEmpty() const;
+
+        void brodcastMessage(const std::string& msg, Client* sender);
 };
 
 

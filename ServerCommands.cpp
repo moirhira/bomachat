@@ -43,7 +43,7 @@ void handlePass(Client *client, std::vector<std::string> params, std::string pas
     client->setAuthenticated(true);
 }
 
-void handleNick(Client *client, std::vector<std::string> &params, std::vector<Client *> &clients)
+void handleNick(Client *client, std::vector<std::string> &params, std::vector<Client *> &clients, std::vector<Channel> &channels)
 {
     if (params.size() < 1)
     {
@@ -77,12 +77,27 @@ void handleNick(Client *client, std::vector<std::string> &params, std::vector<Cl
             return;
         }
     }
-    // bool wasReg = client->isReg();
+    bool wasReg = client->isReg();
+    std::string oldNick = client->getNickname();
+
     client->setNickname(newNick);
+
     if (!client->getUsername().empty())
         client->setRegistered(true);
-    if (client->isReg())
+
+    if (client->isReg() && !wasReg)
+    {
         sendWelcome(client);
+    }
+    else if (wasReg)
+    {
+        std::string nickMsg = ":" + oldNick + "!" + client->getUsername() + "@localhost NICK :" + newNick + "\r\n";
+        for (size_t j = 0; j < channels.size(); j++)
+        {
+            channels[j].brodcastMessage(nickMsg, client);
+        }
+        client->sendMessage(nickMsg);
+    }
 }
 
 void handleUser(Client *client, const std::vector<std::string> params)
