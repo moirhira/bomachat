@@ -56,6 +56,12 @@ void handleNick(Client *client, std::vector<std::string> &params, std::vector<Cl
         return;
     }
     std::string newNick = params[0];
+    if (newNick.empty())
+    {
+        sendReply(client, 431, "No nickname given", "NICK");
+        return;
+    }
+
     if (isdigit(newNick[0]) || newNick[0] == '-')
     {
         sendReply(client, 432, "Nickname cannot start with \"-\" or Number", "NICK");
@@ -68,6 +74,11 @@ void handleNick(Client *client, std::vector<std::string> &params, std::vector<Cl
             sendReply(client, 432, "Nickname can only contain letters, digits, and - _ ' [ ] \\ ^ { } |", "NICK");
             return;
         }
+    }
+    if (newNick.size() > 9)
+    {
+        sendReply(client, 432, "Nickname too long", "NICK");
+        return;
     }
     for (size_t j = 0; j < clients.size(); j++)
     {
