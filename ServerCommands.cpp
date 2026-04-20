@@ -404,167 +404,173 @@ void handleMode(Client *client, std::vector<std::string> params, std::vector<Cha
     }
     for (size_t i = 0; i < channels.size(); i++)
     {
-        if (channels[i].getName() == params[0])
+        if (channels[i].getName() != params[0])
+            continue;
+
+        if (!channels[i].isOperator(client))
         {
-            if (!channels[i].isOperator(client))
-            {
-                sendReply(client, 482, "You're not channel operator", params[0]);
-                return;
-            }
-            char sign = params[1][0];
-            char flag = params[1][1];
+            sendReply(client, 482, "You're not channel operator", params[0]);
+            return;
+        }
+
+        char sign = params[1][0];
+        size_t nextArgId = 2;
+        for  (size_t f = 1; f < params[1].size(); f++)
+        {
+            char flag = params[1][f];
             switch (flag)
             {
-            case 'i':
-            {
-                if (sign == '+')
-                    channels[i].setInviteOnly(true);
-                else
-                    channels[i].setInviteOnly(false);
-                std::string msgReply = ":" + client->getNickname() + "!" + client->getUsername() + "@localhost MODE " + params[0] + " " + params[1] + "\r\n";
-                std::vector<Client *> members = channels[i].getMembers();
-                for (size_t j = 0; j < channels[i].getMembers().size(); j++)
+                case 'i':
                 {
-                    members[j]->sendMessage(msgReply);
-                }
-                break;
-            }
-            case 'o':
-            {
-                if (params.size() < 3)
-                {
-                    sendReply(client, 461, "Not enough parameters", "MODE");
-                    return;
-                }
-                Client *targetClient = NULL;
-                for (size_t j = 0; j < channels[i].getMembers().size(); j++)
-                {
-                    if (channels[i].getMembers()[j]->getNickname() == params[2])
+                    if (sign == '+')
+                        channels[i].setInviteOnly(true);
+                    else
+                        channels[i].setInviteOnly(false);
+                    std::string msgReply = ":" + client->getNickname() + "!" + client->getUsername() + "@localhost MODE " + params[0] + " " + params[1] + "\r\n";
+                    std::vector<Client *> members = channels[i].getMembers();
+                    for (size_t j = 0; j < channels[i].getMembers().size(); j++)
                     {
-                        targetClient = channels[i].getMembers()[j];
+                        members[j]->sendMessage(msgReply);
+                    }
+                    break;
+                }
+                case 'o':
+                {
+                    if (params.size() <= nextArgId)
+                    {
+                        sendReply(client, 461, "Not enough parameters", "MODE");
+                        return;
+                    }
+                    Client *targetClient = NULL;
+                    for (size_t j = 0; j < channels[i].getMembers().size(); j++)
+                    {
+                        if (channels[i].getMembers()[j]->getNickname() == params[2])
+                        {
+                            targetClient = channels[i].getMembers()[j];
+                            break;
+                        }
+                    }
+                    if (!targetClient)
+                    {
+                        std::string nick = client->getNickname().empty() ? "*" : client->getNickname();
+                        std::string reply = ":server 441 " + nick + " " + params[2] + " " + params[0] + " :They aren't on that channel\r\n";
+                        client->sendMessage(reply);
+                        return; 
+                    }
+                    if (sign == '+')
+                    {
+                        if (!channels[i].isOperator(targetClient))
+                        {
+                            channels[i].addOperator(targetClient);
+                        }
+                        std::string msgReply = ":" + client->getNickname() + "!" + client->getUsername() + "@localhost MODE " + params[0] + " " + params[1] + " " + params[2] + "\r\n";
+                        std::vector<Client *> members = channels[i].getMembers();
+                        for (size_t j = 0; j < channels[i].getMembers().size(); j++)
+                        {
+                            members[j]->sendMessage(msgReply);
+                        }
+                        break;
+                    }
+                    else
+                    {
+                        channels[i].removeOperator(targetClient);
+                        std::string msgReply = ":" + client->getNickname() + "!" + client->getUsername() + "@localhost MODE " + params[0] + " " + params[1] + " " + params[2] + "\r\n";
+                        std::vector<Client *> members = channels[i].getMembers();
+                        for (size_t j = 0; j < channels[i].getMembers().size(); j++)
+                        {
+                            members[j]->sendMessage(msgReply);
+                        }
                         break;
                     }
                 }
-                if (!targetClient)
+                case 'l':
                 {
-                    std::string nick = client->getNickname().empty() ? "*" : client->getNickname();
-                    std::string reply = ":server 441 " + nick + " " + params[2] + " " + params[0] + " :They aren't on that channel\r\n";
-                    client->sendMessage(reply);
-                    return; 
-                }
-                if (sign == '+')
-                {
-                    if (!channels[i].isOperator(targetClient))
+                    if (sign == '-')
                     {
-                        channels[i].addOperator(targetClient);
+                        channels[i].setUsrlimit(0);
                     }
-                    std::string msgReply = ":" + client->getNickname() + "!" + client->getUsername() + "@localhost MODE " + params[0] + " " + params[1] + " " + params[2] + "\r\n";
-                    std::vector<Client *> members = channels[i].getMembers();
-                    for (size_t j = 0; j < channels[i].getMembers().size(); j++)
+                    else
                     {
-                        members[j]->sendMessage(msgReply);
-                    }
-                    break;
-                }
-                else
-                {
-                    channels[i].removeOperator(targetClient);
-                    std::string msgReply = ":" + client->getNickname() + "!" + client->getUsername() + "@localhost MODE " + params[0] + " " + params[1] + " " + params[2] + "\r\n";
-                    std::vector<Client *> members = channels[i].getMembers();
-                    for (size_t j = 0; j < channels[i].getMembers().size(); j++)
-                    {
-                        members[j]->sendMessage(msgReply);
-                    }
-                    break;
-                }
-            }
-            case 'l':
-            {
-                if (sign == '-')
-                {
-                    channels[i].setUsrlimit(0);
-                }
-                else
-                {
-                    if (params.size() < 3)
-                    {
-                        sendReply(client, 461, "Not enough parameters", "MODE");
-                        return;
-                    }
-                    if (!isdigit(static_cast<unsigned char>(params[2][0])))
-                    {
-                        sendReply(client, 461, "Not enough parameters", "MODE");
-                        return;
-                    }
-                    for (size_t i = 0; i < params[2].size(); i++)
-                    {
-                        if (!isdigit(params[2][i]))
+                        if (params.size() < 3)
                         {
-                            sendReply(client, 460, "User limit should be a number", "MODE");
+                            sendReply(client, 461, "Not enough parameters", "MODE");
                             return;
                         }
+                        if (!isdigit(static_cast<unsigned char>(params[2][0])))
+                        {
+                            sendReply(client, 461, "Not enough parameters", "MODE");
+                            return;
+                        }
+                        for (size_t i = 0; i < params[2].size(); i++)
+                        {
+                            if (!isdigit(params[2][i]))
+                            {
+                                sendReply(client, 460, "User limit should be a number", "MODE");
+                                return;
+                            }
+                        }
+                        long newUserLimit = strtol(params[2].c_str(), NULL, 10);
+                        if (newUserLimit <= 0 || newUserLimit >= 1024)
+                        {
+                            sendReply(client, 460, "User limit should be 1 >=  <= 1024", "MODE");
+                            return;
+                        }
+                        channels[i].setUsrlimit(static_cast<int>(newUserLimit));
                     }
-                    long newUserLimit = strtol(params[2].c_str(), NULL, 10);
-                    if (newUserLimit <= 0 || newUserLimit >= 1024)
+                    std::string modeArg = (sign == '+' ? " " + params[2] : "");
+                    std::string msgReply = ":" + client->getNickname() + "!" + client->getUsername() + "@localhost MODE " + params[0] + " " + params[1] + modeArg + "\r\n";
+                    std::vector<Client *> members = channels[i].getMembers();
+                    for (size_t j = 0; j < channels[i].getMembers().size(); j++)
                     {
-                        sendReply(client, 460, "User limit should be 1 >=  <= 1024", "MODE");
-                        return;
+                        members[j]->sendMessage(msgReply);
                     }
-                    channels[i].setUsrlimit(static_cast<int>(newUserLimit));
+                    break;
                 }
-                std::string modeArg = (sign == '+' ? " " + params[2] : "");
-                std::string msgReply = ":" + client->getNickname() + "!" + client->getUsername() + "@localhost MODE " + params[0] + " " + params[1] + modeArg + "\r\n";
-                std::vector<Client *> members = channels[i].getMembers();
-                for (size_t j = 0; j < channels[i].getMembers().size(); j++)
+                case 'k':
                 {
-                    members[j]->sendMessage(msgReply);
-                }
-                break;
-            }
-            case 'k':
-            {
-                if (sign == '-')
-                {
-                    channels[i].setPass("");
-                }
-                else
-                {
-                    if (params.size() < 3)
+                    if (sign == '-')
                     {
-                        sendReply(client, 461, "Not enough parameters", "MODE");
-                        return;
+                        channels[i].setPass("");
                     }
-                    channels[i].setPass(params[2]);
+                    else
+                    {
+                        if (params.size() < 3)
+                        {
+                            sendReply(client, 461, "Not enough parameters", "MODE");
+                            return;
+                        }
+                        channels[i].setPass(params[2]);
+                    }
+                    std::string modeArg = (sign == '+' ? " " + params[2] : "");
+                    std::string msgReply = ":" + client->getNickname() + "!" + client->getUsername() + "@localhost MODE " + params[0] + " " + params[1] + modeArg + "\r\n";
+                    std::vector<Client *> members = channels[i].getMembers();
+                    for (size_t j = 0; j < channels[i].getMembers().size(); j++)
+                    {
+                        members[j]->sendMessage(msgReply);
+                    }
+                    break;
                 }
-                std::string modeArg = (sign == '+' ? " " + params[2] : "");
-                std::string msgReply = ":" + client->getNickname() + "!" + client->getUsername() + "@localhost MODE " + params[0] + " " + params[1] + modeArg + "\r\n";
-                std::vector<Client *> members = channels[i].getMembers();
-                for (size_t j = 0; j < channels[i].getMembers().size(); j++)
+                case 't':
                 {
-                    members[j]->sendMessage(msgReply);
+                    if (sign == '+')
+                        channels[i].setTopicRestricted(true);
+                    else
+                        channels[i].setTopicRestricted(false);
+                    std::string msgReply = ":" + client->getNickname() + "!" + client->getUsername() + "@localhost MODE " + params[0] + " " + params[1] + "\r\n";
+                    std::vector<Client *> members = channels[i].getMembers();
+                    for (size_t j = 0; j < channels[i].getMembers().size(); j++)
+                    {
+                        members[j]->sendMessage(msgReply);
+                    }
+                    break;
                 }
-                break;
+                default:
+                    sendReply(client, 472, std::string("Unknown mode flag ") + flag, "MODE");
+                    return;
             }
-            case 't':
-            {
-                if (sign == '+')
-                    channels[i].setTopicRestricted(true);
-                else
-                    channels[i].setTopicRestricted(false);
-                std::string msgReply = ":" + client->getNickname() + "!" + client->getUsername() + "@localhost MODE " + params[0] + " " + params[1] + "\r\n";
-                std::vector<Client *> members = channels[i].getMembers();
-                for (size_t j = 0; j < channels[i].getMembers().size(); j++)
-                {
-                    members[j]->sendMessage(msgReply);
-                }
-                break;
-            }
-            default:
-                sendReply(client, 472, std::string("Unknown mode flag ") + flag, "MODE");
-                return;
-            }
-            return;
         }
+        return;
+        
     }
     sendReply(client, 403, "Channel doesn't exist", params[0]);
     return;
