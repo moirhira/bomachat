@@ -193,14 +193,10 @@ static std::vector<std::string> splitCommaList(const std::string& list)
 {
     std::vector<std::string> items;
     size_t start = 0;
-    while (start < list.size())
+    while (start <= list.size())
     {
-        size_t commaPos = list.find(',');
-        size_t len;
-        if (commaPos == std::string::npos)
-            len = list.size() - start;
-        else
-            len = commaPos - start;
+        size_t commaPos = list.find(',', start);
+        size_t len = (commaPos == std::string::npos) ? list.size() - start : commaPos - start;
         items.push_back(list.substr(start, len));
         if (commaPos == std::string::npos)
             break;
@@ -223,47 +219,60 @@ void handleJoin(Client *client, std::vector<std::string> params, std::vector<Cha
     }
     std::vector<std::string> channelList = splitCommaList(params[0]);
     std::vector<std::string> keyList;
-    if (!isValidChannelName(params[0]))
+    if (params.size() > 1)
+        keyList = splitCommaList(params[1]);
+    
+    for (size_t i = 0; i < channelList.size(); i++)
     {
-        sendReply(client, 476, "Channel name is invalid", "JOIN");
-        return;
-    }
-    for (size_t i = 0; i < channels.size(); i++)
-    {
-        if (params[0] == channels[i].getName())
+        std::string channelName = channelList[i];
+        std::string key;
+        if (i < keyList.size())
+            key = keyList[i];
+        else
+            key = "";
+
+        if (!isValidChannelName(channelName))
         {
-            if (channels[i].isMember(client))
-                return;
-            if (channels[i].isInviteOnly() && !channels[i].isInvited(client))
+            sendReply(client, 476, "Channel name is invalid", "JOIN");
+            continue;
+        }
+        bool found = false;
+        for (size_t j = 0; j < channels.size(); j++)
+        {
+            if (channelName == channels[j].getName())
             {
-                sendReply(client, 473, "You are not invited to this channel", params[0]);
-                return;
-            }
-            if (!channels[i].getPass().empty())
-            {
-                std::string pswd;
-                if (params.size() > 1)
-                    pswd = params[1];
-                else
-                    pswd = "";
-                if (channels[i].getPass() != pswd)
+                found = true;
+                if (channels[j].isMember(client))
+                    break;
+                if (channels[j].isInviteOnly() && !channels[j].isInvited(client))
                 {
-                    sendReply(client, 475, "Invalid channel password", params[0]);
-                    return;
+                    sendReply(client, 473, "You are not invited to this channel", channelName);
+                    break;
                 }
+                if (!channels[j].getPass().empty())
+                {
+                    if (channels[j].getPass() != key)
+                    {
+                        sendReply(client, 475, "Invalid channel password", channelName);
+                        break;
+                    }
+                }
+                if (channels[j].getUserlimit() > 0 && channels[j].getUserlimit() <= static_cast<int>(channels[j].getMembers().size()))
+                {
+                    sendReply(client, 471, "Channel is full", channelName);
+                    break;
+                }
+                channels[j].addMember(client);
+                sendJoinReply(client, channels[j]);
+                break;
             }
-            if (channels[i].getUserlimit() != 0 && channels[i].getUserlimit() <= (int)channels[i].getMembers().size())
-            {
-                sendReply(client, 471, "Channel is full", params[0]);
-                return;
-            }
-            channels[i].addMember(client);
-            sendJoinReply(client, channels[i]);
-            return;
+        }
+        if (!found)
+        {
+            channels.push_back(Channel(channelName, client));
+            sendJoinReply(client, channels.back());
         }
     }
-    channels.push_back(Channel(params[0], client));
-    sendJoinReply(client, channels.back());
 }
 
 void handlePrivmsg(Client *client, std::vector<std::string> params, std::vector<Client *> &clients, std::vector<Channel> &channels)
