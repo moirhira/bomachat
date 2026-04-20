@@ -397,7 +397,7 @@ void handleMode(Client *client, std::vector<std::string> params, std::vector<Cha
         sendReply(client, 451, "You have not registered", "MODE");
         return;
     }
-    if (params[1].size() < 2 || (params[1][0] != '+' && params[1][0] != '-'))
+    if (params[1].empty() || (params[1][0] != '+' && params[1][0] != '-'))
     {
         sendReply(client, 472, "Unknown mode flag", "MODE");
         return;
@@ -413,11 +413,18 @@ void handleMode(Client *client, std::vector<std::string> params, std::vector<Cha
             return;
         }
 
-        char sign = params[1][0];
+        char sign = '+';
         size_t nextArgId = 2;
-        for  (size_t f = 1; f < params[1].size(); f++)
+
+        for  (size_t f = 0; f < params[1].size(); f++)
         {
             char flag = params[1][f];
+            if (flag == '+' || flag == '-')
+            {
+                sign = flag;
+                continue;
+            }
+
             switch (flag)
             {
                 case 'i':
@@ -436,17 +443,19 @@ void handleMode(Client *client, std::vector<std::string> params, std::vector<Cha
                 }
                 case 'o':
                 {
-                    if (params.size() <= nextArgId)
+                    if (nextArgId >= params.size())
                     {
                         sendReply(client, 461, "Not enough parameters", "MODE");
                         return;
                     }
+                    const std::string &targetNick = params[nextArgId++];
                     Client *targetClient = NULL;
-                    for (size_t j = 0; j < channels[i].getMembers().size(); j++)
+                    std::vector<Client *> members = channels[i].getMembers();
+                    for (size_t j = 0; j < members.size(); j++)
                     {
-                        if (channels[i].getMembers()[j]->getNickname() == params[2])
+                        if (members[j]->getNickname() == targetNick)
                         {
-                            targetClient = channels[i].getMembers()[j];
+                            targetClient = members[j];
                             break;
                         }
                     }
@@ -460,28 +469,19 @@ void handleMode(Client *client, std::vector<std::string> params, std::vector<Cha
                     if (sign == '+')
                     {
                         if (!channels[i].isOperator(targetClient))
-                        {
                             channels[i].addOperator(targetClient);
-                        }
-                        std::string msgReply = ":" + client->getNickname() + "!" + client->getUsername() + "@localhost MODE " + params[0] + " " + params[1] + " " + params[2] + "\r\n";
-                        std::vector<Client *> members = channels[i].getMembers();
-                        for (size_t j = 0; j < channels[i].getMembers().size(); j++)
-                        {
-                            members[j]->sendMessage(msgReply);
-                        }
-                        break;
                     }
                     else
                     {
                         channels[i].removeOperator(targetClient);
-                        std::string msgReply = ":" + client->getNickname() + "!" + client->getUsername() + "@localhost MODE " + params[0] + " " + params[1] + " " + params[2] + "\r\n";
-                        std::vector<Client *> members = channels[i].getMembers();
-                        for (size_t j = 0; j < channels[i].getMembers().size(); j++)
-                        {
-                            members[j]->sendMessage(msgReply);
-                        }
-                        break;
                     }
+                    std::string msgReply = ":" + client->getNickname() + "!" + client->getUsername() + "@localhost MODE " + params[0] + " " + sign + "o " + targetNick + "\r\n";
+                    
+                    for (size_t j = 0; j < channels[i].getMembers().size(); j++)
+                    {
+                        members[j]->sendMessage(msgReply);
+                    }
+                    break;
                 }
                 case 'l':
                 {
