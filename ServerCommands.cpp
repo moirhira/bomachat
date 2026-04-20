@@ -485,25 +485,17 @@ void handleMode(Client *client, std::vector<std::string> params, std::vector<Cha
                 }
                 case 'l':
                 {
-                    if (sign == '-')
+                    if (sign == '+')
                     {
-                        channels[i].setUsrlimit(0);
-                    }
-                    else
-                    {
-                        if (params.size() < 3)
+                        if (nextArgId >= params.size())
                         {
                             sendReply(client, 461, "Not enough parameters", "MODE");
                             return;
                         }
-                        if (!isdigit(static_cast<unsigned char>(params[2][0])))
+                        const std::string &limitStr = params[nextArgId++];
+                        for (size_t k = 0; k < limitStr.size(); k++)
                         {
-                            sendReply(client, 461, "Not enough parameters", "MODE");
-                            return;
-                        }
-                        for (size_t i = 0; i < params[2].size(); i++)
-                        {
-                            if (!isdigit(params[2][i]))
+                            if (!isdigit(static_cast<unsigned char>(limitStr[k])))
                             {
                                 sendReply(client, 460, "User limit should be a number", "MODE");
                                 return;
@@ -516,13 +508,22 @@ void handleMode(Client *client, std::vector<std::string> params, std::vector<Cha
                             return;
                         }
                         channels[i].setUsrlimit(static_cast<int>(newUserLimit));
+                        std::string msgReply = ":" + client->getNickname() + "!" + client->getUsername() + "@localhost MODE " + params[0] + " +l" + limitStr + "\r\n";
+                        nextArgId++;
+                        std::vector<Client *> members = channels[i].getMembers();
+                        for (size_t j = 0; j < channels[i].getMembers().size(); j++)
+                        {
+                            members[j]->sendMessage(msgReply);
+                        }
                     }
-                    std::string modeArg = (sign == '+' ? " " + params[2] : "");
-                    std::string msgReply = ":" + client->getNickname() + "!" + client->getUsername() + "@localhost MODE " + params[0] + " " + params[1] + modeArg + "\r\n";
-                    std::vector<Client *> members = channels[i].getMembers();
-                    for (size_t j = 0; j < channels[i].getMembers().size(); j++)
+                    else
                     {
-                        members[j]->sendMessage(msgReply);
+                        channels[i].setUsrlimit(0);
+                        std::string msg = ":" + client->getNickname() + "!" + client->getUsername()
+                            + "@localhost MODE " + params[0] + " -l\r\n";
+                        std::vector<Client *> members = channels[i].getMembers();
+                        for (size_t j = 0; j < members.size(); j++)
+                            members[j]->sendMessage(msg);
                     }
                     break;
                 }
