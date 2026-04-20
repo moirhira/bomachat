@@ -84,7 +84,7 @@ void handleNick(Client *client, std::vector<std::string> &params, std::vector<Cl
     {
         if (clients[j]->getFd() != client->getFd() && clients[j]->getNickname() == newNick)
         {
-            sendReply(client, 433, "nickname already taken by another client", "NICK");
+            sendReply(client, 433, "Nickname is already in use", newNick);
             return;
         }
     }
@@ -233,7 +233,7 @@ void handleJoin(Client *client, std::vector<std::string> params, std::vector<Cha
 
         if (!isValidChannelName(channelName))
         {
-            sendReply(client, 476, "Channel name is invalid", "JOIN");
+            sendReply(client, 476, "Channel name is invalid", channelName);
             continue;
         }
         bool found = false;
@@ -297,7 +297,7 @@ void handlePrivmsg(Client *client, std::vector<std::string> params, std::vector<
             {
                 if (!channels[i].isMember(client))
                 {
-                    sendReply(client, 442, "You are not on that channel", "PRIVMSG");
+                    sendReply(client, 442, "You are not on that channel", target);
                     return;
                 }
 
@@ -313,7 +313,7 @@ void handlePrivmsg(Client *client, std::vector<std::string> params, std::vector<
                 return;
             }
         }
-        sendReply(client, 403, "Channel doesn't exist", "PRIVMSG");
+        sendReply(client, 403, "Channel doesn't exist", target);
         return;
     }
 
@@ -328,7 +328,7 @@ void handlePrivmsg(Client *client, std::vector<std::string> params, std::vector<
             return;
         }
     }
-    sendReply(client, 401, target + " :No such nick/channel", "PRIVMSG");
+    sendReply(client, 401, "No such nick/channel", target);
 }
 
 void handleTopic(Client *client, std::vector<std::string> params, std::vector<Channel> &channels)
@@ -340,7 +340,7 @@ void handleTopic(Client *client, std::vector<std::string> params, std::vector<Ch
     }
     if (params[0][0] != '#')
     {
-        sendReply(client, 476, "Channel name should start with #", "TOPIC");
+        sendReply(client, 476, "Channel name should start with #", params[0]);
         return;
     }
     for (size_t i = 0; i < channels.size(); i++)
@@ -349,7 +349,7 @@ void handleTopic(Client *client, std::vector<std::string> params, std::vector<Ch
         {
             if (!channels[i].isMember(client))
             {
-                sendReply(client, 442, "You are not on that channel", "TOPIC");
+                sendReply(client, 442, "You are not on that channel", params[0]);
                 return;
             }
             if (params.size() == 1)
@@ -362,7 +362,7 @@ void handleTopic(Client *client, std::vector<std::string> params, std::vector<Ch
             }
             if (channels[i].isTopicRestricted() && !channels[i].isOperator(client))
             {
-                sendReply(client, 482, "You are not allowed to change the topic", "TOPIC");
+                sendReply(client, 482, "You are not allowed to change the topic", params[0]);
                 return;
             }
             channels[i].setTopic(params[1]);
@@ -375,7 +375,7 @@ void handleTopic(Client *client, std::vector<std::string> params, std::vector<Ch
             return;
         }
     }
-    sendReply(client, 403, "Channel doesn't exist", "TOPIC");
+    sendReply(client, 403, "Channel doesn't exist", params[0]);
 }
 
 void handleMode(Client *client, std::vector<std::string> params, std::vector<Channel> &channels)
@@ -389,7 +389,7 @@ void handleMode(Client *client, std::vector<std::string> params, std::vector<Cha
     {
         if (params[0] == client->getNickname())
             return;
-        sendReply(client, 476, "Channel name should start with #", "MODE");
+        sendReply(client, 476, "Channel name should start with #", params[0]);
         return;
     }
     if (!client->isReg())
@@ -408,7 +408,7 @@ void handleMode(Client *client, std::vector<std::string> params, std::vector<Cha
         {
             if (!channels[i].isOperator(client))
             {
-                sendReply(client, 482, "You're not channel operator", "MODE");
+                sendReply(client, 482, "You're not channel operator", params[0]);
                 return;
             }
             char sign = params[1][0];
@@ -566,7 +566,7 @@ void handleMode(Client *client, std::vector<std::string> params, std::vector<Cha
             return;
         }
     }
-    sendReply(client, 403, "Channel doesn't exist", "MODE");
+    sendReply(client, 403, "Channel doesn't exist", params[0]);
     return;
 }
 
@@ -579,7 +579,7 @@ void handleKick(Client *client, std::vector<std::string> params, std::vector<Cha
     }
     if (params[0][0] != '#')
     {
-        sendReply(client, 476, "Channel name should start with #", "KICK");
+        sendReply(client, 476, "Channel name should start with #", params[0]);
         return;
     }
     std::string targetChannel = params[0];
@@ -614,23 +614,23 @@ void handleKick(Client *client, std::vector<std::string> params, std::vector<Cha
                             return;
                         }
                     }
-                    sendReply(client, 441, "Target client not on this channel", "KICK");
+                    sendReply(client, 441, "They aren't on that channel", targetUser + " " + targetChannel);
                     return;
                 }
                 else
                 {
-                    sendReply(client, 482, "You're not channel operator", "KICK");
+                    sendReply(client, 482, "You're not channel operator", targetChannel);
                     return;
                 }
             }
             else
             {
-                sendReply(client, 442, "You are not on that channel", "KICK");
+                sendReply(client, 442, "You are not on that channel", targetChannel);
                 return;
             }
         }
     }
-    sendReply(client, 403, "Channel doesn't exist", "KICK");
+    sendReply(client, 403, "Channel doesn't exist", targetChannel);
     return;
 }
 
@@ -655,7 +655,7 @@ void handleInvite(Client *client, std::vector<std::string> params, std::vector<C
     }
     if (!target)
     {
-        sendReply(client, 401, "No such nick", "INVITE");
+        sendReply(client, 401, "No such nick", targetClientNick);
         return;
     }
 
@@ -665,19 +665,19 @@ void handleInvite(Client *client, std::vector<std::string> params, std::vector<C
         {
             if (!channels[i].isMember(client))
             {
-                sendReply(client, 442, "You are not on that channel", "INVITE");
+                sendReply(client, 442, "You are not on that channel", targetChannel);
                 return;
             }
 
             if (!channels[i].isOperator(client))
             {
-                sendReply(client, 482, "You're not channel operator", "INVITE");
+                sendReply(client, 482, "You're not channel operator", targetChannel);
                 return;
             }
 
             if (channels[i].isMember(target))
             {
-                sendReply(client, 443, targetClientNick + " :is already on channel", "INVITE");
+                sendReply(client, 443, "is already on channel", targetClientNick + " " + targetChannel);
                 return;
             }
 
@@ -691,5 +691,5 @@ void handleInvite(Client *client, std::vector<std::string> params, std::vector<C
             return;
         }
     }
-    sendReply(client, 403, "No such channel", "INVITE");
+    sendReply(client, 403, "No such channel", targetChannel);
 }
