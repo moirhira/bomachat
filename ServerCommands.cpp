@@ -189,6 +189,26 @@ bool isValidChannelName(const std::string& name)
     return true;
 }
 
+static std::vector<std::string> splitCommaList(const std::string& list)
+{
+    std::vector<std::string> items;
+    size_t start = 0;
+    while (start < list.size())
+    {
+        size_t commaPos = list.find(',');
+        size_t len;
+        if (commaPos == std::string::npos)
+            len = list.size() - start;
+        else
+            len = commaPos - start;
+        items.push_back(list.substr(start, len));
+        if (commaPos == std::string::npos)
+            break;
+        start = commaPos + 1;
+    }
+    return items;
+}
+
 void handleJoin(Client *client, std::vector<std::string> params, std::vector<Channel> &channels)
 {
     if (params.size() < 1)
@@ -201,6 +221,8 @@ void handleJoin(Client *client, std::vector<std::string> params, std::vector<Cha
         sendReply(client, 451, "You have not registered", "JOIN");
         return;
     }
+    std::vector<std::string> channelList = splitCommaList(params[0]);
+    std::vector<std::string> keyList;
     if (!isValidChannelName(params[0]))
     {
         sendReply(client, 476, "Channel name is invalid", "JOIN");
