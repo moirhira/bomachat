@@ -385,15 +385,53 @@ void handleMode(Client *client, std::vector<std::string> params, std::vector<Cha
         sendReply(client, 461, "Not enough parameters", "MODE");
         return;
     }
-    
-
-    if (params[0][0] != '#')
+    std::string target = params[0];
+    if (target[0] != '#')
     {
-        if (params[0] == client->getNickname())
+        if (target != client->getNickname())
+        {
+            sendReply(client, 502, "Can't change mode for other users", "MODE");
             return;
-        sendReply(client, 476, "Channel name should start with #", params[0]);
+        }
+        std::string reply = ":server 221 " + client->getNickname() + " +\r\n";
+        client->sendMessage(reply);
         return;
     }
+
+    if (params.size() == 1)
+    {
+        for (size_t i = 0; i < channels.size(); i++)
+        {
+            if (channels[i].getName() != target)
+                continue;
+            
+            std::string modeStr = "+";
+            std::string modeArgs;
+            if (channels[i].isInviteOnly())
+                modeStr += 'i';
+            if (channels[i].isTopicRestricted())
+                modeStr += 't';
+            if (!channels[i].getPass().empty())
+            {
+                modeStr += 'k';
+                modeArgs += " " + channels[i].getPass();
+            }
+            if (channels[i].getUserlimit() > 0)
+            {
+                modeStr += 'l';
+                std::ostringstream oss;
+                oss << channels[i].getUserlimit();
+                modeArgs += " " + oss.str();
+            }
+
+            std::string reply = ":server 324 " + client->getNickname() + " " + target + " " + modeStr + modeArgs + "\r\n";
+            client->sendMessage(reply);
+            return;
+        }
+        sendReply(client, 403, "Channel doesn't exist", "MODE");
+        return;
+    }
+    
 
     if (!client->isReg())
     {
@@ -409,12 +447,12 @@ void handleMode(Client *client, std::vector<std::string> params, std::vector<Cha
 
     for (size_t i = 0; i < channels.size(); i++)
     {
-        if (channels[i].getName() != params[0])
+        if (channels[i].getName() != target)
             continue;
 
         if (!channels[i].isOperator(client))
         {
-            sendReply(client, 482, "You're not channel operator", params[0]);
+            sendReply(client, 482, "You're not channel operator", "MODE");
             return;
         }
 
@@ -464,7 +502,7 @@ void handleMode(Client *client, std::vector<std::string> params, std::vector<Cha
                     }
                     if (!targetClient)
                     {
-                        std::string reply = ":server 441 " + client->getNickname() + " " + targetNick + " " + params[0] + " :They aren't on that channel\r\n";
+                        std::string reply = ":server 441 " + client->getNickname() + " " + targetNick + " " + target + " :They aren't on that channel\r\n";
                         client->sendMessage(reply);
                         return; 
                     }
@@ -563,7 +601,7 @@ void handleMode(Client *client, std::vector<std::string> params, std::vector<Cha
     if (!modeStr.empty())
     {
         std::string msg = ":" + client->getNickname() + "!" + client->getUsername()
-                        + "@localhost MODE " + params[0] + " " + modeStr + modeArgs + "\r\n";
+                        + "@localhost MODE " + target + " " + modeStr + modeArgs + "\r\n";
         std::vector<Client *> members = channels[i].getMembers();
         for (size_t j = 0; j < members.size(); j++)
             members[j]->sendMessage(msg);
