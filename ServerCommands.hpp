@@ -6,6 +6,7 @@
 
 class Client;
 class Channel;
+class Server;
 
 bool isPreRegistrationCommand(const std::string &cmd);
 void sendReply(Client *client, int errorCode, std::string errorMsg, std::string cmd);
@@ -19,6 +20,6 @@ void handleMode(Client *client, std::vector<std::string> params, std::vector<Cha
 void handleKick(Client *client, std::vector<std::string> params, std::vector<Channel> &channels);
 void handleInvite(Client *client, std::vector<std::string> params, std::vector<Channel> &channels, std::vector<Client *> &clients);
 void handlePart(Client *client, std::vector<std::string> params, std::vector<Channel> &channels);
-void handleQuit(Client *client, std::vector<std::string> params, std::vector<Channel> &channels, std::vector<Client *> &clients, int& i);
+void handleQuit(Client *client, std::vector<std::string> params, std::vector<Channel> &channels, int& i, Server* server);
 
 #endif

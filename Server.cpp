@@ -274,8 +274,6 @@ command Server::parseCommand(std::string cmdLine)
 
 void Server::handelCommand(command cmd, Client *client, int& i)
 {
-    std::cout << "Received command: " << cmd.command << std::endl;
-
     if (cmd.command.empty())
         return;
 
@@ -332,7 +330,7 @@ void Server::handelCommand(command cmd, Client *client, int& i)
     else if (cmd.command == "PART")
         handlePart(client, cmd.params,  _channels);
     else if (cmd.command == "QUIT")
-        handleQuit(client, cmd.params, _channels, _clients, i);
+        handleQuit(client, cmd.params, _channels, i, this);
     else
     {
         sendReply(client, 421, "Unknown command", cmd.command);
