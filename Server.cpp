@@ -272,7 +272,7 @@ command Server::parseCommand(std::string cmdLine)
     return cmdStruct;
 }
 
-void Server::handelCommand(command cmd, Client *client)
+void Server::handelCommand(command cmd, Client *client, int& i)
 {
     std::cout << "Received command: " << cmd.command << std::endl;
 
@@ -372,7 +372,7 @@ void Server::handelClient(int &i)
             if (!line.empty() && line[line.size() - 1] == '\r')
                 line.erase(line.size() - 1);
             command cmd = parseCommand(line);
-            handelCommand(cmd, curClient);
+            handelCommand(cmd, curClient, i);
         }
     }
     // printf("buffer now -> %s\n", getClientById(_fds[i].fd)->getBuffer().c_str());

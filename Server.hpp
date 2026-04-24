@@ -44,7 +44,7 @@ class Server {
 
         Client* getClientById(int id);
         command parseCommand(std::string cmdLine);
-        void handelCommand(command cmd, Client* client);
+        void handelCommand(command cmd, Client* client, int& i);
 
         void disconnectClient(int& i);
 };
