@@ -725,11 +725,7 @@ void handlePart(Client *client, std::vector<std::string> params, std::vector<Cha
                 }
                 channels[j].removeClientEverywhere(client);
                 std::string partMsg = ":" + client->getNickname() + "!" + client->getUsername() + "@localhost PART " + channelName + "\r\n";
-                std::vector<Client *> members = channels[j].getMembers();
-                for (size_t m = 0; m < members.size(); m++)
-                {
-                    members[m]->sendMessage(partMsg);
-                }
+                channels[j].brodcastMessage(partMsg, client);
                 client->sendMessage(partMsg);
                 break;
             }
