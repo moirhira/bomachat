@@ -274,6 +274,7 @@ command Server::parseCommand(std::string cmdLine)
 
 void Server::handelCommand(command cmd, Client *client)
 {
+    std::cout << "Received command: " << cmd.command << std::endl;
 
     if (cmd.command.empty())
         return;

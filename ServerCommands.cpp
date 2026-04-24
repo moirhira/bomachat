@@ -380,11 +380,12 @@ void handleTopic(Client *client, std::vector<std::string> params, std::vector<Ch
 
 void handleMode(Client *client, std::vector<std::string> params, std::vector<Channel> &channels)
 {
-    if (params.size() < 2)
+    if (params.size() < 1)
     {
         sendReply(client, 461, "Not enough parameters", "MODE");
         return;
     }
+    
 
     if (params[0][0] != '#')
     {
