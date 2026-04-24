@@ -694,3 +694,8 @@ void handleInvite(Client *client, std::vector<std::string> params, std::vector<C
     }
     sendReply(client, 403, "No such channel", targetChannel);
 }
+
+
+void handlePart(Client *client, std::vector<std::string> params, std::vector<Channel> &channels) {
+    
+}

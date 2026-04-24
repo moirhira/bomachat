@@ -18,5 +18,5 @@ void handleTopic(Client *client, std::vector<std::string> params, std::vector<Ch
 void handleMode(Client *client, std::vector<std::string> params, std::vector<Channel> &channels);
 void handleKick(Client *client, std::vector<std::string> params, std::vector<Channel> &channels);
 void handleInvite(Client *client, std::vector<std::string> params, std::vector<Channel> &channels, std::vector<Client *> &clients);
-
+void handlePart(Client *client, std::vector<std::string> params, std::vector<Channel> &channels);
 #endif
