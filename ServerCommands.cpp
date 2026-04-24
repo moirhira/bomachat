@@ -776,3 +776,8 @@ void handlePart(Client *client, std::vector<std::string> params, std::vector<Cha
         }
     }
 }
+
+
+void handleQuit(Client *client, std::vector<std::string> params, std::vector<Channel> &channels, std::vector<Client *> &clients, int& i) {
+    std::string reason;
+}

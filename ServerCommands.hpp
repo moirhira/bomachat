@@ -19,4 +19,6 @@ void handleMode(Client *client, std::vector<std::string> params, std::vector<Cha
 void handleKick(Client *client, std::vector<std::string> params, std::vector<Channel> &channels);
 void handleInvite(Client *client, std::vector<std::string> params, std::vector<Channel> &channels, std::vector<Client *> &clients);
 void handlePart(Client *client, std::vector<std::string> params, std::vector<Channel> &channels);
+void handleQuit(Client *client, std::vector<std::string> params, std::vector<Channel> &channels, std::vector<Client *> &clients, int& i);
+
 #endif

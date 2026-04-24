@@ -331,6 +331,12 @@ void Server::handelCommand(command cmd, Client *client, int& i)
         handleInvite(client, cmd.params, _channels, _clients);
     else if (cmd.command == "PART")
         handlePart(client, cmd.params,  _channels);
+    else if (cmd.command == "QUIT")
+        handleQuit(client, cmd.params, _channels, _clients, i);
+    else
+    {
+        sendReply(client, 421, "Unknown command", cmd.command);
+    }
 }
 
 
