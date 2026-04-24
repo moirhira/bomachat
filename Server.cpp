@@ -328,6 +328,8 @@ void Server::handelCommand(command cmd, Client *client)
         handleKick(client, cmd.params, _channels);
     else if (cmd.command == "INVITE")
         handleInvite(client, cmd.params, _channels, _clients);
+    else if (cmd.command == "PART")
+        handlePart(client, cmd.params,  _channels);
 }
 
 
