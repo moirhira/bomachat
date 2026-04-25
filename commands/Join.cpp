@@ -53,21 +53,6 @@ bool isValidChannelName(const std::string& name)
     return true;
 }
 
-static std::vector<std::string> splitCommaList(const std::string& list)
-{
-    std::vector<std::string> items;
-    size_t start = 0;
-    while (start <= list.size())
-    {
-        size_t commaPos = list.find(',', start);
-        size_t len = (commaPos == std::string::npos) ? list.size() - start : commaPos - start;
-        items.push_back(list.substr(start, len));
-        if (commaPos == std::string::npos)
-            break;
-        start = commaPos + 1;
-    }
-    return items;
-}
 
 void handleJoin(Client *client, std::vector<std::string> params, std::vector<Channel> &channels)
 {
