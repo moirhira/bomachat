@@ -20,7 +20,7 @@ static void sendWelcome(Client *client)
 
 bool isPreRegistrationCommand(const std::string &cmd)
 {
-    return (cmd == "PASS" || cmd == "NICK" || cmd == "USER" || cmd == "CAP" || cmd == "PING" || cmd == "PONG");
+    return (cmd == "PASS" || cmd == "NICK" || cmd == "USER" || cmd == "CAP" || cmd == "PING" || cmd == "PONG" || cmd == "QUIT");
 }
 
 void handlePass(Client *client, std::vector<std::string> params, std::string password)
@@ -38,6 +38,7 @@ void handlePass(Client *client, std::vector<std::string> params, std::string pas
     if (password != params[0])
     {
         sendReply(client, 464, "Worong password!", "PASS");
+        close(client->getFd());
         return;
     }
     client->setAuthenticated(true);
@@ -742,6 +743,9 @@ void handlePart(Client *client, std::vector<std::string> params, std::vector<Cha
         sendReply(client, 461, "Not enough parameters", "PART");
         return;
     }
+    std::string reason;
+    if (params.size() > 1)
+        reason = params[1];
     std::vector<std::string> channelList = splitCommaList(params[0]);
     for (size_t i = 0; i < channelList.size(); i++)
     {
@@ -763,7 +767,10 @@ void handlePart(Client *client, std::vector<std::string> params, std::vector<Cha
                     break;
                 }
                 channels[j].removeClientEverywhere(client);
-                std::string partMsg = ":" + client->getNickname() + "!" + client->getUsername() + "@localhost PART " + channelName + "\r\n";
+                std::string partMsg = ":" + client->getNickname() + "!" + client->getUsername() + "@localhost PART " + channelName;
+                if (!reason.empty())
+                    partMsg += " :" + reason;
+                partMsg += "\r\n";
                 channels[j].brodcastMessage(partMsg, client);
                 client->sendMessage(partMsg);
                 break;
