@@ -736,68 +736,68 @@ bool isPreRegistrationCommand(const std::string &cmd)
 // }
 
 
-void handlePart(Client *client, std::vector<std::string> params, std::vector<Channel> &channels) {
-    (void)channels;
-    if (params.size() < 1)
-    {
-        sendReply(client, 461, "Not enough parameters", "PART");
-        return;
-    }
-    std::string reason;
-    if (params.size() > 1)
-        reason = params[1];
-    std::vector<std::string> channelList = splitCommaList(params[0]);
-    for (size_t i = 0; i < channelList.size(); i++)
-    {
-        std::string channelName = channelList[i];
-        if (channelName[0] != '#')
-        {
-            sendReply(client, 476, "Channel name should start with #", channelName);
-            return;
-        }
-        bool found = false;
-        for (size_t j = 0; j < channels.size(); j++)
-        {
-            if (channelName == channels[j].getName())
-            {
-                found = true;
-                if (!channels[j].isMember(client))
-                {
-                    sendReply(client, 476, "You are not on that channel",channelName);
-                    break;
-                }
-                channels[j].removeClientEverywhere(client);
-                std::string partMsg = ":" + client->getNickname() + "!" + client->getUsername() + "@localhost PART " + channelName;
-                if (!reason.empty())
-                    partMsg += " :" + reason;
-                partMsg += "\r\n";
-                channels[j].brodcastMessage(partMsg, client);
-                client->sendMessage(partMsg);
-                break;
-            }
-        }
-        if (!found)
-        {
-            sendReply(client, 403, "Channel doesn't exist", channelName);
-            return;
-        }
-    }
-}
+// void handlePart(Client *client, std::vector<std::string> params, std::vector<Channel> &channels) {
+//     (void)channels;
+//     if (params.size() < 1)
+//     {
+//         sendReply(client, 461, "Not enough parameters", "PART");
+//         return;
+//     }
+//     std::string reason;
+//     if (params.size() > 1)
+//         reason = params[1];
+//     std::vector<std::string> channelList = splitCommaList(params[0]);
+//     for (size_t i = 0; i < channelList.size(); i++)
+//     {
+//         std::string channelName = channelList[i];
+//         if (channelName[0] != '#')
+//         {
+//             sendReply(client, 476, "Channel name should start with #", channelName);
+//             return;
+//         }
+//         bool found = false;
+//         for (size_t j = 0; j < channels.size(); j++)
+//         {
+//             if (channelName == channels[j].getName())
+//             {
+//                 found = true;
+//                 if (!channels[j].isMember(client))
+//                 {
+//                     sendReply(client, 476, "You are not on that channel",channelName);
+//                     break;
+//                 }
+//                 channels[j].removeClientEverywhere(client);
+//                 std::string partMsg = ":" + client->getNickname() + "!" + client->getUsername() + "@localhost PART " + channelName;
+//                 if (!reason.empty())
+//                     partMsg += " :" + reason;
+//                 partMsg += "\r\n";
+//                 channels[j].brodcastMessage(partMsg, client);
+//                 client->sendMessage(partMsg);
+//                 break;
+//             }
+//         }
+//         if (!found)
+//         {
+//             sendReply(client, 403, "Channel doesn't exist", channelName);
+//             return;
+//         }
+//     }
+// }
 
 
-void handleQuit(Client *client, std::vector<std::string> params, std::vector<Channel> &channels, int& i, Server *server) {
-    std::string reason;
-    if (params.size() > 0)
-        reason = params[0];
-    else
-        reason = "Client Quit";
-    std::string quirtMsg = ":" + client->getNickname() + "!" + client->getUsername() + "@localhost QUIT :" + reason + "\r\n";
-    for (size_t j = 0; j < channels.size(); j++)
-    {
-        if (!channels[j].isMember(client))
-            continue;
-        channels[j].brodcastMessage(quirtMsg, client);
-        channels[j].removeClientEverywhere(client);
-    }
-    server->disconnectClient(i);
-}
+// void handleQuit(Client *client, std::vector<std::string> params, std::vector<Channel> &channels, int& i, Server *server) {
+//     std::string reason;
+//     if (params.size() > 0)
+//         reason = params[0];
+//     else
+//         reason = "Client Quit";
+//     std::string quirtMsg = ":" + client->getNickname() + "!" + client->getUsername() + "@localhost QUIT :" + reason + "\r\n";
+//     for (size_t j = 0; j < channels.size(); j++)
+//     {
+//         if (!channels[j].isMember(client))
+//             continue;
+//         channels[j].brodcastMessage(quirtMsg, client);
+//         channels[j].removeClientEverywhere(client);
+//     }
+//     server->disconnectClient(i);
+// }
