@@ -1,5 +1,6 @@
 #include "ServerCommands.hpp"
 #include "Server.hpp"
+#include <cctype>
 
 void handleMode(Client *client, std::vector<std::string> params, std::vector<Channel> &channels)
 {

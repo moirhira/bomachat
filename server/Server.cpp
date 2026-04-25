@@ -9,6 +9,8 @@ Server::~Server()
         delete _clients[i];
 }
 
+
+
 void Server::disconnectClient(int &i)
 {
     int fd = _fds[i].fd;
@@ -62,39 +64,101 @@ void Server::disconnectClient(int &i)
     }
 }
 
-int Server::init()
+
+
+Client *Server::getClientById(int id)
 {
-    _sockfd = socket(AF_INET, SOCK_STREAM, 0);
-    int opt = 1;
-    setsockopt(_sockfd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
-    if (_sockfd < 0)
+    for (size_t i = 0; i < _clients.size(); i++)
     {
-        perror("socket fail: ");
-        return 1;
+        if (_clients[i]->getFd() == id)
+            return _clients[i];
     }
+    return NULL;
+}
 
-    struct sockaddr_in addr;
-    addr.sin_family = AF_INET;
-    addr.sin_addr.s_addr = INADDR_ANY;
-    addr.sin_port = htons(_port);
-    if (bind(_sockfd, (struct sockaddr *)&addr, sizeof(addr)) < 0)
+void Server::acceptClient()
+{
+    if (_nfds >= 1024)
     {
-        perror("bind faild: ");
-        return 1;
+        std::cerr << "Max clients reached, skipping accept" << std::endl;
+        return;
     }
-
-    if (listen(_sockfd, 10) < 0)
+    int client_fd = accept(_sockfd, NULL, NULL);
+    if (client_fd < 0)
     {
-        perror("listen faild: ");
-        return 1;
+        if (errno == EWOULDBLOCK || errno == EAGAIN)
+            return;
+        
+        if (errno == EMFILE)
+        {
+            std::cerr << "FD limit reached, refusing connections" << std::endl;
+            return;
+        }
+        perror("accept faild: ");
+        return;
     }
-    if (fcntl(_sockfd, F_SETFL, O_NONBLOCK) < 0)
+    if (client_fd >= 1024)
+    {
+        std::cerr << "FD limit reached, refusing connections" << std::endl;
+        close(client_fd);
+        return;
+    }
+    if (fcntl(client_fd, F_SETFL, O_NONBLOCK) < 0)
     {
         perror("fcntl faild: ");
-        return 1;
+        close(client_fd);
+        return;
     }
-    return 0;
+    _clients.push_back(new Client(client_fd));
+    _fds[_nfds].fd = client_fd;
+    _fds[_nfds].events = _clients.back()->getClientEvents();
+    _nfds++;
+    std::cout << "new client connected" << std::endl;
 }
+
+void Server::handelClient(int &i)
+{
+    char buffer[1024];
+    int byts = recv(_fds[i].fd, buffer, sizeof(buffer) - 1, 0);
+    if (byts < 0)
+    {
+        if (errno == EWOULDBLOCK || errno == EAGAIN)
+            return;
+        perror("recv failed: ");
+        return;
+    }
+    if (byts <= 0)
+    {
+        disconnectClient(i);
+        std::cout << "client disconnected" << std::endl;
+    }
+    else
+    {
+        buffer[byts] = '\0';
+        Client *curClient = getClientById(_fds[i].fd);
+        if (!curClient)
+            return;
+        curClient->appendToBuffer(std::string(buffer, byts));
+        if (curClient->getBuffer().size() > 4096)
+        {
+            disconnectClient(i);
+            std::cout << "client disconnected (buffer overflow)" << std::endl;
+            return;
+        }
+        std::string &cmdLine = curClient->getBuffer();
+        size_t pos;
+        while ((pos = cmdLine.find("\r\n")) != std::string::npos)
+        {
+            std::string line = cmdLine.substr(0, pos);
+            cmdLine.erase(0, pos + 2);
+            if (!line.empty() && line[line.size() - 1] == '\r')
+                line.erase(line.size() - 1);
+            command cmd = parseCommand(line);
+            handelCommand(cmd, curClient, i);
+        }
+    }
+}
+
 
 void Server::run()
 {
@@ -170,148 +234,36 @@ void Server::run()
     }
 }
 
-Client *Server::getClientById(int id)
+int Server::init()
 {
-    for (size_t i = 0; i < _clients.size(); i++)
+    _sockfd = socket(AF_INET, SOCK_STREAM, 0);
+    int opt = 1;
+    setsockopt(_sockfd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
+    if (_sockfd < 0)
     {
-        if (_clients[i]->getFd() == id)
-            return _clients[i];
+        perror("socket fail: ");
+        return 1;
     }
-    return NULL;
-}
 
-void Server::acceptClient()
-{
-    if (_nfds >= 1024)
+    struct sockaddr_in addr;
+    addr.sin_family = AF_INET;
+    addr.sin_addr.s_addr = INADDR_ANY;
+    addr.sin_port = htons(_port);
+    if (bind(_sockfd, (struct sockaddr *)&addr, sizeof(addr)) < 0)
     {
-        std::cerr << "Max clients reached, skipping accept" << std::endl;
-        return;
+        perror("bind faild: ");
+        return 1;
     }
-    int client_fd = accept(_sockfd, NULL, NULL);
-    if (client_fd < 0)
+
+    if (listen(_sockfd, 10) < 0)
     {
-        if (errno == EWOULDBLOCK || errno == EAGAIN)
-            return;
-        
-        if (errno == EMFILE)
-        {
-            std::cerr << "FD limit reached, refusing connections" << std::endl;
-            return;
-        }
-        perror("accept faild: ");
-        return;
+        perror("listen faild: ");
+        return 1;
     }
-    if (client_fd >= 1024)
-    {
-        std::cerr << "FD limit reached, refusing connections" << std::endl;
-        close(client_fd);
-        return;
-    }
-    if (fcntl(client_fd, F_SETFL, O_NONBLOCK) < 0)
+    if (fcntl(_sockfd, F_SETFL, O_NONBLOCK) < 0)
     {
         perror("fcntl faild: ");
-        close(client_fd);
-        return;
+        return 1;
     }
-    _clients.push_back(new Client(client_fd));
-    _fds[_nfds].fd = client_fd;
-    _fds[_nfds].events = _clients.back()->getClientEvents();
-    _nfds++;
-    std::cout << "new client connected" << std::endl;
-}
-
-command Server::parseCommand(std::string cmdLine)
-{
-    command cmdStruct;
-
-    if (cmdLine.empty())
-        return cmdStruct;
-
-    size_t start = cmdLine.find_first_not_of(" \t\n\r");
-    if (start == std::string::npos)
-        return cmdStruct;
-    std::string trimmedCmd = cmdLine.substr(start);
-
-    if (trimmedCmd[0] == ':')
-    {
-        size_t spacePos = trimmedCmd.find(' ');
-        if (spacePos == std::string::npos)
-            return cmdStruct;
-        trimmedCmd = trimmedCmd.substr(spacePos + 1);
-    }
-
-    size_t spacePos = trimmedCmd.find(' ');
-    cmdStruct.command = trimmedCmd.substr(0, spacePos);
-
-    for (size_t i = 0; i < cmdStruct.command.size(); i++)
-    {
-        cmdStruct.command[i] = toupper(cmdStruct.command[i]);
-    }
-
-    if (spacePos == std::string::npos)
-        return cmdStruct;
-    trimmedCmd.erase(0, spacePos + 1);
-
-    while (!trimmedCmd.empty())
-    {
-        if (trimmedCmd[0] == ':')
-        {
-            cmdStruct.params.push_back(trimmedCmd.substr(1));
-            break;
-        }
-        size_t pos = trimmedCmd.find(' ');
-        if (pos == std::string::npos)
-        {
-            cmdStruct.params.push_back(trimmedCmd);
-            break;
-        }
-        cmdStruct.params.push_back(trimmedCmd.substr(0, pos));
-        trimmedCmd.erase(0, pos + 1);
-    }
-    return cmdStruct;
-}
-
-
-
-void Server::handelClient(int &i)
-{
-    char buffer[1024];
-    int byts = recv(_fds[i].fd, buffer, sizeof(buffer) - 1, 0);
-    if (byts < 0)
-    {
-        if (errno == EWOULDBLOCK || errno == EAGAIN)
-            return;
-        perror("recv failed: ");
-        return;
-    }
-    if (byts <= 0)
-    {
-        disconnectClient(i);
-        std::cout << "client disconnected" << std::endl;
-    }
-    else
-    {
-        buffer[byts] = '\0';
-        Client *curClient = getClientById(_fds[i].fd);
-        if (!curClient)
-            return;
-        curClient->appendToBuffer(std::string(buffer, byts));
-        if (curClient->getBuffer().size() > 4096)
-        {
-            disconnectClient(i);
-            std::cout << "client disconnected (buffer overflow)" << std::endl;
-            return;
-        }
-        std::string &cmdLine = curClient->getBuffer();
-        size_t pos;
-        while ((pos = cmdLine.find("\r\n")) != std::string::npos)
-        {
-            std::string line = cmdLine.substr(0, pos);
-            cmdLine.erase(0, pos + 2);
-            if (!line.empty() && line[line.size() - 1] == '\r')
-                line.erase(line.size() - 1);
-            command cmd = parseCommand(line);
-            handelCommand(cmd, curClient, i);
-        }
-    }
+    return 0;
 }

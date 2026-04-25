@@ -1,5 +1,6 @@
 #include "ServerCommands.hpp"
 #include "Server.hpp"
+#include <cctype>
 
 
 void handleNick(Client *client, std::vector<std::string> &params, std::vector<Client *> &clients, std::vector<Channel> &channels)

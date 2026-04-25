@@ -10,7 +10,7 @@ void sendReply(Client *client, int errorCode, std::string errorMsg, std::string 
     client->sendMessage(reply);
 }
 
-static void sendWelcome(Client *client)
+void sendWelcome(Client *client)
 {
     sendReply(client, 001, "Welcome to the IRC server " + client->getNickname(), "");
     sendReply(client, 002, "Your host is ircserv", "");
@@ -23,7 +23,7 @@ bool isPreRegistrationCommand(const std::string &cmd)
     return (cmd == "PASS" || cmd == "NICK" || cmd == "USER" || cmd == "CAP" || cmd == "PING" || cmd == "PONG" || cmd == "QUIT");
 }
 
-static std::vector<std::string> splitCommaList(const std::string& list)
+std::vector<std::string> splitCommaList(const std::string& list)
 {
     std::vector<std::string> items;
     size_t start = 0;
