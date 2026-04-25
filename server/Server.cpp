@@ -135,7 +135,8 @@ void Server::handelClient(int &i)
     else
     {
         buffer[byts] = '\0';
-        Client *curClient = getClientById(_fds[i].fd);
+        int curFd = _fds[i].fd;
+        Client *curClient = getClientById(curFd);
         if (!curClient)
             return;
         curClient->appendToBuffer(std::string(buffer, byts));
@@ -155,6 +156,8 @@ void Server::handelClient(int &i)
                 line.erase(line.size() - 1);
             command cmd = parseCommand(line);
             handelCommand(cmd, curClient, i);
+            if (!getClientById(curFd))
+                return;
         }
     }
 }
