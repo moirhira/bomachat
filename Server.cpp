@@ -4,6 +4,7 @@
 void sendReply(Client *client, int errorCode, std::string errorMsg, std::string cmd);
 
 Server::Server(int port, std::string password) : _port(port), _password(password) {}
+
 Server::~Server()
 {
     for (size_t i = 0; i < _clients.size(); i++)
@@ -379,5 +380,4 @@ void Server::handelClient(int &i)
             handelCommand(cmd, curClient, i);
         }
     }
-    // printf("buffer now -> %s\n", getClientById(_fds[i].fd)->getBuffer().c_str());
 }
