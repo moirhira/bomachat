@@ -12,6 +12,9 @@ class Bot : public Client {
     public:
         Bot(int port, std::string address);
         ~Bot();
+
+        int getServerPort();
+        std::string  getServerAdr();
         void connectToServer();
 };
 

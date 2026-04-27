@@ -15,6 +15,7 @@ int main(int ac, char **av)
         std::cerr << "Invalid port!" << std::endl;
         return 1;
     }
-    Bot bot();
+    Bot bot(port, address);
+    bot.connectToServer();
 
 }
