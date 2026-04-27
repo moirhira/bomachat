@@ -6,8 +6,11 @@
 
 
 class Bot : public Client {
+    private:
+        int _sPort;
+        std::string _sAddress;
     public:
-        Bot(int fd);
+        Bot(int port, std::string address);
         ~Bot();
         void connectToServer();
 };
