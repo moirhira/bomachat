@@ -7,6 +7,8 @@
 
 class Bot : public Client {
     public:
+        Bot(int fd);
+        ~Bot();
         void connectToServer();
 };
 

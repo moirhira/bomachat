@@ -15,6 +15,7 @@ class Client {
         std::string _outBuffer;
 
     public:
+        Client();
         Client(int fd);
         ~Client();
 
