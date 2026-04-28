@@ -16,6 +16,10 @@ int main(int ac, char **av)
         return 1;
     }
     Bot bot(port, address);
+    std::string nick = "bot";
+    std::string user = "botUser";
+    std::string real = "boma";
+    bot.init(nick, user, real);
     bot.connectToServer();
 
 }

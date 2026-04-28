@@ -20,6 +20,7 @@ class Client {
         ~Client();
 
         int getFd() const;
+        int setFd(int fd);
         std::string getNickname() const;
         std::string getUsername() const;
         std::string getRealname() const;

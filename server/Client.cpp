@@ -37,6 +37,10 @@ std::string& Client::getBuffer() {
 }
 
 
+int Client::setFd(int fd) {
+    _fd = fd;
+    return _fd;
+}
 
 void Client::setNickname(std::string nickname){ 
     _nickname = nickname;
@@ -57,6 +61,7 @@ void Client::setAuthenticated(bool value) {
 void Client::setRegistered(bool value) {
     _registred = value;
 }
+
 
 void Client::appendToBuffer(std::string data){ 
     _buffer += data;
