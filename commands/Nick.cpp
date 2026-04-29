@@ -35,6 +35,11 @@ void handleNick(Client *client, std::vector<std::string> &params, std::vector<Cl
             return;
         }
     }
+    if (newNick == "bot")
+    {
+        sendReply(client, 432, "Nickname is reserved", "NICK");
+        return;
+    }
     if (newNick.size() > 9)
     {
         sendReply(client, 432, "Nickname too long", "NICK");
