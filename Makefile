@@ -1,5 +1,4 @@
 NAME = ircserv
-BOT  = bot
 SRC  = main.cpp \
 	server/Server.cpp \
 	server/Client.cpp \
@@ -18,10 +17,7 @@ SRC  = main.cpp \
 	commands/Topic.cpp \
 	commands/User.cpp
 
-BOT_SRC = bot/Bot.cpp \
-	bot/CommandHandler.cpp
-BOT_OBJ = $(BOT_SRC:.cpp=.o)
-OBJ = $(SRC:.cpp=.o) $(BOT_OBJ)
+OBJ = $(SRC:.cpp=.o)
 CXX = c++
 CXXFLAGS = -Wall -Wextra -Werror -std=c++98 -Iserver -Icommands -Iutils
 
@@ -32,18 +28,20 @@ all: $(NAME)
 $(NAME): $(OBJ)
 	$(CXX) $(CXXFLAGS) $(OBJ) -o $(NAME)
 
-$(BOT): $(BOT_OBJ)
-	$(CXX) $(CXXFLAGS) $(BOT_OBJ) -o $(BOT)
-
 %.o: %.cpp
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
+bot:
+	make -C bot
+
 clean:
+	make -C bot clean
 	rm -f $(OBJ)
 
 fclean: clean
+	make -C bot fclean
 	rm -f $(NAME)
 
 re: fclean all
 
-.PHONY: all clean fclean re
+.PHONY: all clean fclean re bot
