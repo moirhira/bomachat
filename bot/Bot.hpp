@@ -24,7 +24,7 @@ class Bot : public Client {
 
         int getServerPort();
         std::string  getServerAdr();
-        void connectToServer();
+        void connectToServer(std::string password);
 };
 
 

@@ -28,7 +28,7 @@ void Bot::init(std::string nickName, std::string userName, std::string realName)
     setFd(_sockfd);
 };
 
-void Bot::connectToServer() {
+void Bot::connectToServer(std::string password) {
     struct sockaddr_in serverAddr;
     serverAddr.sin_family = AF_INET;
     serverAddr.sin_port = htons(_sPort);
@@ -38,6 +38,10 @@ void Bot::connectToServer() {
         perror("connect failed: ");
         return;
     }
+    std::string passCmd = "PASS " + password + "\r\n";
+    send(getFd(), passCmd.c_str(), passCmd.size(), 0);
+    send(getFd(), "NICK bot\r\n", 15, 0);
+    send(getFd(), "USER bot 0 * :bot\r\n", 21, 0);
     std::cout << "Connected to server at " << _sAddress << ":" << _sPort << std::endl;
 }
 
