@@ -10,6 +10,7 @@
 #include <string>
 #include <unistd.h>
 #include <iostream>
+#include <arpa/inet.h>
 
 class Bot : public Client {
     private:

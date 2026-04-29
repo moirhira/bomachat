@@ -26,20 +26,19 @@ void Bot::init(std::string nickName, std::string userName, std::string realName)
         return;
     }
     setFd(_sockfd);
-    connectToServer();
 };
 
 void Bot::connectToServer() {
     struct sockaddr_in serverAddr;
     serverAddr.sin_family = AF_INET;
-    serverAddr.sin_addr.s_addr = INADDR_ANY;
     serverAddr.sin_port = htons(_sPort);
+    inet_pton(AF_INET, _sAddress.c_str(), &serverAddr.sin_addr);
     if (connect(getFd(), (struct sockaddr *)&serverAddr, sizeof(serverAddr)) < 0 )
     {
         perror("connect failed: ");
         return;
     }
-    
+    std::cout << "Connected to server at " << _sAddress << ":" << _sPort << std::endl;
 }
 
 
