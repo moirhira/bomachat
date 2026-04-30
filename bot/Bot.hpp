@@ -9,6 +9,10 @@
 #include <unistd.h>
 #include <iostream>
 #include <arpa/inet.h>
+#include <cstdio>
+#include <cerrno>
+#include <cstdlib>
+
 
 class Bot{
     private:
@@ -16,6 +20,7 @@ class Bot{
         std::string _nickname;
         std::string _username;
         std::string _realname;
+        std::string _buffer;
         int _sPort;
         std::string _sAddress;
     public:

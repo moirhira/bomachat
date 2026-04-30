@@ -64,5 +64,59 @@ void Bot::connectToServer(std::string password) {
 }
 
 void Bot::run() {
-    
+    pollfd fds[1];
+    fds[0].fd = _fd;
+    fds[0].events = POLLIN;
+    while (true)
+    {
+        if (poll(fds , 1, 500) < 0)
+        {
+            perror("poll failed: ");
+            break;
+        }
+        if (fds[0].revents & POLLIN)
+        {
+            char buffer[1024];
+            int byts = recv(fds[0].fd, buffer, sizeof(buffer) - 1, 0);
+            if (byts < 0)
+            {
+                if (errno == EWOULDBLOCK || errno == EAGAIN)
+                    return;
+                perror("recv failed: ");
+                return;
+            }
+            if (byts <= 0)
+            {
+                close(_fd);
+                std::cout << "client disconnected" << std::endl;
+            }
+            else
+            {
+                buffer[byts] = '\0';
+                _buffer.append(buffer, byts);
+                if (_buffer.size() > 4096)
+                {
+                    close(_fd);
+                    std::cout << "client disconnected (buffer overflow)" << std::endl;
+                    return;
+                }
+                size_t pos;
+                while ((pos = _buffer.find("\r\n")) != std::string::npos)
+                {
+                    std::string line = _buffer.substr(0, pos);
+                    _buffer.erase(0, pos + 2);
+                    if (!line.empty() && line[line.size() - 1] == '\r')
+                        line.erase(line.size() - 1);
+                    std::cout << "Received: " << line << std::endl;
+                    // command cmd = parseCommand(line);
+                    // handelCommand(cmd, curClient, i);
+                    // if (!getClientById(curFd))
+                    //     return;
+                }
+            }
+
+        }
+
+
+    }
 }

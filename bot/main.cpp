@@ -22,5 +22,6 @@ int main(int ac, char **av)
     std::string real = "boma";
     bot.init(nick, user, real);
     bot.connectToServer(password);
+    bot.run();
 
 }
