@@ -1,7 +1,5 @@
 #ifndef BOT_HPP
 #define BOT_HPP
-#include "../server/Server.hpp"
-#include "../server/Client.hpp"
 #include <iostream>
 #include <string>
 #include <sys/socket.h>
@@ -29,6 +27,7 @@ class Bot{
         int getServerPort();
         std::string  getServerAdr();
         void connectToServer(std::string password);
+        void run();
 };
 
 

@@ -1,4 +1,5 @@
 #include "Bot.hpp"
+#include <cstring>
 
 
 Bot::Bot(int port, std::string address) : _sPort(port), _sAddress(address) {}
@@ -40,8 +41,8 @@ void Bot::connectToServer(std::string password) {
     }
     std::string passCmd = "PASS " + password + "\r\n";
     send(_fd, passCmd.c_str(), passCmd.size(), 0);
-    send(_fd, "NICK bot\r\n", 15, 0);
-    send(_fd, "USER bot 0 * :bot\r\n", 21, 0);
+    send(_fd, "NICK bot\r\n", strlen("NICK bot\r\n"), 0);
+    send(_fd, "USER bot 0 * :bot\r\n", strlen("USER bot 0 * :bot\r\n"), 0);
 
     char buffer[1024];
 
@@ -60,13 +61,8 @@ void Bot::connectToServer(std::string password) {
             return;
         }
     }
-    recv(_fd, buffer, 1024, 0);
-    std::cout << "Received from server: " << buffer << std::endl;
-
-
-
-
-    std::cout << "Connected to server at " << _sAddress << ":" << _sPort << std::endl;
 }
 
-
+void Bot::run() {
+    
+}
