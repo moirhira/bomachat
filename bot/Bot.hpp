@@ -12,6 +12,14 @@
 #include <cstdio>
 #include <cerrno>
 #include <cstdlib>
+#include <vector>
+
+struct command
+{
+    std::string command;
+    std::vector<std::string> params;
+};
+
 
 
 class Bot{

@@ -127,7 +127,7 @@ void Server::handelClient(int &i)
         perror("recv failed: ");
         return;
     }
-    if (byts <= 0)
+    if (byts == 0)
     {
         disconnectClient(i);
         std::cout << "client disconnected" << std::endl;
