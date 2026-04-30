@@ -12,8 +12,12 @@
 #include <iostream>
 #include <arpa/inet.h>
 
-class Bot : public Client {
+class Bot{
     private:
+        int _fd;
+        std::string _nickname;
+        std::string _username;
+        std::string _realname;
         int _sPort;
         std::string _sAddress;
     public:
