@@ -32,6 +32,13 @@ class Bot{
         std::string _buffer;
         int _sPort;
         std::string _sAddress;
+
+        void handelCommand(command cmd);
+        command parseCommand(std::string cmdLine);
+        void handlePrivmsg(const command &cmd);
+        void handleKick();
+        void handleError();
+        void handleJoin();
     public:
         Bot(int port, std::string address);
         ~Bot();
@@ -43,8 +50,8 @@ class Bot{
         void connectToServer(std::string password);
         void run();
 
-        void handelCommand(command cmd);
-        command parseCommand(std::string cmdLine);
+        
+
 };
 
 

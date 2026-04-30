@@ -58,6 +58,9 @@ void Bot::connectToServer(std::string password) {
         if (data.find("001") != std::string::npos)
         {
             std::cout << "Registred succesfully" << std::endl;
+            std::string joinCmd = "JOIN #general\r\n";
+            send(_fd, joinCmd.c_str(), joinCmd.size(), 0);
+            return;
             return;
         }
     }
@@ -118,19 +121,38 @@ command Bot::parseCommand(std::string cmdLine)
 }
 
 
-void handleJoin()
+void Bot::handleJoin()
 {
 
 }
-void handlePrivmsg() {
+void Bot::handlePrivmsg(const command &cmd) {
+    std::string senderNick = cmd.prefix.substr(0, cmd.prefix.find("!"));
+    if (senderNick.empty())
+        return;
+    
+    std::string target = cmd.params[0];
+    std::string msgCommand = cmd.params[1];
+
+    std::cout << "sender ->  " << senderNick << std::endl;
+    std::cout << "target ->  " << target << std::endl;
+    std::cout << "message ->  " << msgCommand << std::endl;
+    std::string targetReply = (target[0] == '#') ? target : senderNick;
+    
+
+    if (msgCommand == "!help")
+    {
+        std::string helpMsg = "PRIVMSG " + targetReply + " :" + "Available commands: !help !time !roll\r\n";
+        send(_fd, helpMsg.c_str(), helpMsg.size(), 0);
+    }
+
+    
+}
+
+void Bot::handleError() {
 
 }
 
-void handleKick() {
-
-}
-
-void handleError() {
+void Bot::handleKick() {
 
 }
 
@@ -142,7 +164,7 @@ void Bot::handelCommand(command cmd)
     if (cmd.command == "JOIN")
         handleJoin();
     else if (cmd.command == "PRIVMSG")
-        handlePrivmsg();
+        handlePrivmsg(cmd);
     else if (cmd.command == "KICK")
         handleKick();
     else if (cmd.command == "ERROR")
