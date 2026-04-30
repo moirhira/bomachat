@@ -18,6 +18,7 @@ struct command
 {
     std::string command;
     std::vector<std::string> params;
+    std::string prefix;
 };
 
 
@@ -41,6 +42,9 @@ class Bot{
         std::string  getServerAdr();
         void connectToServer(std::string password);
         void run();
+
+        void handelCommand(command cmd);
+        command parseCommand(std::string cmdLine);
 };
 
 

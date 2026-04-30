@@ -65,7 +65,7 @@ void Bot::connectToServer(std::string password) {
 
 
 
-command parseCommand(std::string cmdLine)
+command Bot::parseCommand(std::string cmdLine)
 {
     command cmdStruct;
 
@@ -82,6 +82,7 @@ command parseCommand(std::string cmdLine)
         size_t spacePos = trimmedCmd.find(' ');
         if (spacePos == std::string::npos)
             return cmdStruct;
+        cmdStruct.prefix = trimmedCmd.substr(1, spacePos - 1);
         trimmedCmd = trimmedCmd.substr(spacePos + 1);
     }
 
@@ -114,6 +115,42 @@ command parseCommand(std::string cmdLine)
         trimmedCmd.erase(0, pos + 1);
     }
     return cmdStruct;
+}
+
+
+void handleJoin()
+{
+
+}
+void handlePrivmsg() {
+
+}
+
+void handleKick() {
+
+}
+
+void handleError() {
+
+}
+
+void Bot::handelCommand(command cmd)
+{
+    if (cmd.command.empty())
+        return;
+
+    if (cmd.command == "JOIN")
+        handleJoin();
+    else if (cmd.command == "PRIVMSG")
+        handlePrivmsg();
+    else if (cmd.command == "KICK")
+        handleKick();
+    else if (cmd.command == "ERROR")
+        handleError();
+    else
+    {
+        std::cout << "Unknown command: " << cmd.command << std::endl;
+    }
 }
 
 void Bot::run() {
@@ -162,8 +199,9 @@ void Bot::run() {
                         line.erase(line.size() - 1);
                     std::cout << "Received: " << line << std::endl;
                     command cmd = parseCommand(line);
-                    
-                    // handelCommand(cmd, curClient, i);
+
+                    handelCommand(cmd);
+
                     // if (!getClientById(curFd))
                     //     return;
                 }
