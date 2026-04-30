@@ -152,7 +152,14 @@ void Bot::handlePrivmsg(const command &cmd) {
         std::string timeMsg = "PRIVMSG " + targetReply + " :Current time: " + timeStr + "\r\n";
         send(_fd, timeMsg.c_str(), timeMsg.size(), 0);
     }
-    
+    if (msgCommand == "!roll")
+    {
+        int roll = std::rand() % 100 + 1;
+        std::ostringstream oss;
+        oss << roll;
+        std::string rollMsg = "PRIVMSG " + targetReply + " :You rolled a " + oss.str() + "\r\n";
+        send(_fd, rollMsg.c_str(), rollMsg.size(), 0);
+    }
 
     
 }
