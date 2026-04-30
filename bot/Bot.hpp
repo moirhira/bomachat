@@ -13,6 +13,8 @@
 #include <cerrno>
 #include <cstdlib>
 #include <vector>
+#include <ctime>
+#include <sstream>
 
 struct command
 {

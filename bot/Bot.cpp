@@ -144,6 +144,15 @@ void Bot::handlePrivmsg(const command &cmd) {
         std::string helpMsg = "PRIVMSG " + targetReply + " :" + "Available commands: !help !time !roll\r\n";
         send(_fd, helpMsg.c_str(), helpMsg.size(), 0);
     }
+    if (msgCommand == "!time")
+    {
+        std::time_t now = std::time(NULL);
+        std::string timeStr = std::ctime(&now);
+        timeStr.erase(timeStr.find("\n"));
+        std::string timeMsg = "PRIVMSG " + targetReply + " :Current time: " + timeStr + "\r\n";
+        send(_fd, timeMsg.c_str(), timeMsg.size(), 0);
+    }
+    
 
     
 }
