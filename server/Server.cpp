@@ -254,17 +254,20 @@ int Server::init()
     addr.sin_port = htons(_port);
     if (bind(_sockfd, (struct sockaddr *)&addr, sizeof(addr)) < 0)
     {
+        close(_sockfd);
         perror("bind faild: ");
         return 1;
     }
 
     if (listen(_sockfd, 10) < 0)
     {
+        close(_sockfd);
         perror("listen faild: ");
         return 1;
     }
     if (fcntl(_sockfd, F_SETFL, O_NONBLOCK) < 0)
     {
+        close(_sockfd);
         perror("fcntl faild: ");
         return 1;
     }
