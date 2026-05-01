@@ -40,18 +40,16 @@ class Bot{
         void handelCommand(command cmd);
         command parseCommand(std::string cmdLine);
         void handlePrivmsg(const command &cmd);
-        void handleKick();
-        void handleError();
-        void handleJoin();
+        void handleKick(const command &cmd);
     public:
         Bot(int port, std::string address);
         ~Bot();
 
-        void init(std::string nickName, std::string userName, std::string realName);
+        int init(std::string nickName, std::string userName, std::string realName);
 
         int getServerPort();
         std::string  getServerAdr();
-        void connectToServer(std::string password);
+        int connectToServer(std::string password);
         void run();
 
         

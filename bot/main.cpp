@@ -16,12 +16,20 @@ int main(int ac, char **av)
         std::cerr << "Invalid port!" << std::endl;
         return 1;
     }
+
     Bot bot(port, address);
+    
     std::string nick = "bot";
     std::string user = "botUser";
     std::string real = "boma";
-    bot.init(nick, user, real);
-    bot.connectToServer(password);
+
+    if (!bot.init(nick, user, real))
+        return 1;
+
+    if (!bot.connectToServer(password))
+        return 1;
+    
     bot.run();
 
+    return 0;
 }

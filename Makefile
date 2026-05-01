@@ -42,6 +42,6 @@ fclean: clean
 	make -C bot fclean
 	rm -f $(NAME)
 
-re: fclean all
+re: fclean all bot
 
 .PHONY: all clean fclean re bot

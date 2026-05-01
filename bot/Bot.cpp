@@ -15,7 +15,7 @@ std::string  Bot::getServerAdr() {
 }
 
 
-void Bot::init(std::string nickName, std::string userName, std::string realName) {
+int Bot::init(std::string nickName, std::string userName, std::string realName) {
     _nickname = nickName;
     _username = userName;
     _realname = realName;
@@ -24,12 +24,13 @@ void Bot::init(std::string nickName, std::string userName, std::string realName)
     if (_sockfd < 0)
     {
         perror("socket fail: ");
-        return;
+        return 0;
     }
     _fd = _sockfd;
+    return 1;
 };
 
-void Bot::connectToServer(std::string password) {
+int Bot::connectToServer(std::string password) {
     struct sockaddr_in serverAddr;
     serverAddr.sin_family = AF_INET;
     serverAddr.sin_port = htons(_sPort);
@@ -37,11 +38,14 @@ void Bot::connectToServer(std::string password) {
     if (connect(_fd, (struct sockaddr *)&serverAddr, sizeof(serverAddr)) < 0 )
     {
         perror("connect failed: ");
-        return;
+        return 0;
     }
     std::string passCmd = "PASS " + password + "\r\n";
     send(_fd, passCmd.c_str(), passCmd.size(), 0);
-    send(_fd, "NICK bot\r\n", strlen("NICK bot\r\n"), 0);
+
+    std::string nickCmd = "NICK " + _nickname + "\r\n";
+    send(_fd, nickCmd.c_str(), nickCmd.size(), 0);
+
     send(_fd, "USER bot 0 * :bot\r\n", strlen("USER bot 0 * :bot\r\n"), 0);
 
     char buffer[1024];
@@ -55,15 +59,27 @@ void Bot::connectToServer(std::string password) {
         buffer[n] = '\0';
         std::string data(buffer);
 
-        if (data.find("001") != std::string::npos)
+        if (data.find("433") != std::string::npos)
+        {
+            _nickname = _nickname + "_";
+            nickCmd = "NICK " + _nickname + "\r\n";
+            send(_fd, nickCmd.c_str(), nickCmd.size(), 0);
+        }
+        else if (data.find("001") != std::string::npos)
         {
             std::cout << "Registred succesfully" << std::endl;
             std::string joinCmd = "JOIN #general\r\n";
             send(_fd, joinCmd.c_str(), joinCmd.size(), 0);
-            return;
-            return;
+            return 1;
+        }
+        else
+        {
+            break;
         }
     }
+    close(_fd);
+    std::cerr << "Failed to connect or register with the server." << std::endl;
+    return 0;
 }
 
 
@@ -120,11 +136,6 @@ command Bot::parseCommand(std::string cmdLine)
     return cmdStruct;
 }
 
-
-void Bot::handleJoin()
-{
-
-}
 void Bot::handlePrivmsg(const command &cmd) {
     std::string senderNick = cmd.prefix.substr(0, cmd.prefix.find("!"));
     if (senderNick.empty())
@@ -142,7 +153,7 @@ void Bot::handlePrivmsg(const command &cmd) {
     
     if (commandName == "!help")
     {
-        std::string helpMsg = "PRIVMSG " + targetReply + " :" + "Available commands: !help !time !roll\r\n";
+        std::string helpMsg = "PRIVMSG " + targetReply + " :" + "Available commands: !help !time !roll !seen\r\n";
         send(_fd, helpMsg.c_str(), helpMsg.size(), 0);
     }
     if (commandName == "!time")
@@ -199,17 +210,16 @@ void Bot::handlePrivmsg(const command &cmd) {
             std::string seenMsg = "PRIVMSG " + targetReply + " :Last seen: " + oss.str() + " seconds ago\r\n";
             send(_fd, seenMsg.c_str(), seenMsg.size(), 0);
         }
-        
     }
     
 }
 
-void Bot::handleError() {
-
-}
-
-void Bot::handleKick() {
-
+void Bot::handleKick(const command &cmd) {
+    if (cmd.params.size() >= 2 && cmd.params[1] == _nickname)
+    {
+        std::string joinCmd = "JOIN" + cmd.params[0] + "\r\n";
+        send(_fd, joinCmd.c_str(), joinCmd.size(), 0);
+    }
 }
 
 void Bot::handelCommand(command cmd)
@@ -217,18 +227,12 @@ void Bot::handelCommand(command cmd)
     if (cmd.command.empty())
         return;
 
-    if (cmd.command == "JOIN")
-        handleJoin();
-    else if (cmd.command == "PRIVMSG")
+    if (cmd.command == "PRIVMSG")
         handlePrivmsg(cmd);
     else if (cmd.command == "KICK")
-        handleKick();
-    else if (cmd.command == "ERROR")
-        handleError();
+        handleKick(cmd);
     else
-    {
-        std::cout << "Unknown command: " << cmd.command << std::endl;
-    }
+        return;
 }
 
 void Bot::run() {
@@ -257,6 +261,7 @@ void Bot::run() {
             {
                 close(_fd);
                 std::cout << "client disconnected" << std::endl;
+                break;
             }
             else
             {
@@ -275,18 +280,10 @@ void Bot::run() {
                     _buffer.erase(0, pos + 2);
                     if (!line.empty() && line[line.size() - 1] == '\r')
                         line.erase(line.size() - 1);
-                    std::cout << "Received: " << line << std::endl;
                     command cmd = parseCommand(line);
-
                     handelCommand(cmd);
-
-                    // if (!getClientById(curFd))
-                    //     return;
                 }
             }
-
         }
-
-
     }
 }
