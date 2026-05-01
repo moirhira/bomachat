@@ -150,7 +150,16 @@ void Bot::handlePrivmsg(const command &cmd) {
     std::string commandName;
     iss >> commandName;
 
-    
+    if (commandName == "!help" || commandName == "!time" || commandName == "!roll")
+    {
+        std::string extra;
+        if (iss >> extra)
+        {
+            std::string errorMsg = "PRIVMSG " + targetReply + " :This command does not take any parameters.\r\n";
+            send(_fd, errorMsg.c_str(), errorMsg.size(), 0);
+            return;
+        }
+    }
     if (commandName == "!help")
     {
         std::string helpMsg = "PRIVMSG " + targetReply + " :" + "Available commands: !help !time !roll !seen\r\n";
