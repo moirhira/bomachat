@@ -130,21 +130,22 @@ void Bot::handlePrivmsg(const command &cmd) {
     if (senderNick.empty())
         return;
     
+    _seenMap[senderNick] = std::time(NULL);
     std::string target = cmd.params[0];
-    std::string msgCommand = cmd.params[1];
-
-    std::cout << "sender ->  " << senderNick << std::endl;
-    std::cout << "target ->  " << target << std::endl;
-    std::cout << "message ->  " << msgCommand << std::endl;
     std::string targetReply = (target[0] == '#') ? target : senderNick;
-    
 
-    if (msgCommand == "!help")
+    std::string msgCommand = cmd.params[1];
+    std::istringstream iss(msgCommand);
+    std::string commandName;
+    iss >> commandName;
+
+    
+    if (commandName == "!help")
     {
         std::string helpMsg = "PRIVMSG " + targetReply + " :" + "Available commands: !help !time !roll\r\n";
         send(_fd, helpMsg.c_str(), helpMsg.size(), 0);
     }
-    if (msgCommand == "!time")
+    if (commandName == "!time")
     {
         std::time_t now = std::time(NULL);
         std::string timeStr = std::ctime(&now);
@@ -152,7 +153,7 @@ void Bot::handlePrivmsg(const command &cmd) {
         std::string timeMsg = "PRIVMSG " + targetReply + " :Current time: " + timeStr + "\r\n";
         send(_fd, timeMsg.c_str(), timeMsg.size(), 0);
     }
-    if (msgCommand == "!roll")
+    if (commandName == "!roll")
     {
         int roll = std::rand() % 100 + 1;
         std::ostringstream oss;
@@ -161,6 +162,45 @@ void Bot::handlePrivmsg(const command &cmd) {
         send(_fd, rollMsg.c_str(), rollMsg.size(), 0);
     }
 
+    if (commandName == "!seen")
+    {
+        std::string targetNickCheck;
+        iss >> targetNickCheck;
+
+        if (targetNickCheck.empty())
+        {
+            std::string seenMsg = "PRIVMSG " + targetReply + " :Please specify a nickname to check.\r\n";
+            send(_fd, seenMsg.c_str(), seenMsg.size(), 0);
+            return;
+
+        }
+
+        if(targetNickCheck == senderNick)
+        {
+            std::string seenMsg = "PRIVMSG " + targetReply + " :That's you!\r\n";
+            send(_fd, seenMsg.c_str(), seenMsg.size(), 0);
+            return;
+
+        }
+
+        if (_seenMap.find(targetNickCheck) == _seenMap.end())
+        {
+            std::string seenMsg = "PRIVMSG " + targetReply + " :I haven't seen " + targetNickCheck + "\r\n";
+            send(_fd, seenMsg.c_str(), seenMsg.size(), 0);
+
+        }
+        else
+        {
+            std::time_t lastSeen = _seenMap[targetNickCheck];
+            std::time_t curTime = std::time(NULL);
+            std::time_t dfTime = difftime(curTime, lastSeen);
+            std::ostringstream oss;
+            oss << dfTime;
+            std::string seenMsg = "PRIVMSG " + targetReply + " :Last seen: " + oss.str() + " seconds ago\r\n";
+            send(_fd, seenMsg.c_str(), seenMsg.size(), 0);
+        }
+        
+    }
     
 }
 

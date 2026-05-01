@@ -15,6 +15,7 @@
 #include <vector>
 #include <ctime>
 #include <sstream>
+#include <map>
 
 struct command
 {
@@ -34,7 +35,8 @@ class Bot{
         std::string _buffer;
         int _sPort;
         std::string _sAddress;
-
+        std::map<std::string, std::time_t> _seenMap;
+        
         void handelCommand(command cmd);
         command parseCommand(std::string cmdLine);
         void handlePrivmsg(const command &cmd);
