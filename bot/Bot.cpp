@@ -223,13 +223,6 @@ void Bot::handlePrivmsg(const command &cmd) {
     
 }
 
-void Bot::handleKick(const command &cmd) {
-    if (cmd.params.size() >= 2 && cmd.params[1] == _nickname)
-    {
-        std::string joinCmd = "JOIN" + cmd.params[0] + "\r\n";
-        send(_fd, joinCmd.c_str(), joinCmd.size(), 0);
-    }
-}
 
 void Bot::handelCommand(command cmd)
 {
@@ -239,7 +232,13 @@ void Bot::handelCommand(command cmd)
     if (cmd.command == "PRIVMSG")
         handlePrivmsg(cmd);
     else if (cmd.command == "KICK")
-        handleKick(cmd);
+    {
+        if (cmd.params.size() >= 2 && cmd.params[1] == _nickname)
+        {
+            std::string joinCmd = "JOIN" + cmd.params[0] + "\r\n";
+            send(_fd, joinCmd.c_str(), joinCmd.size(), 0);
+        }
+    }
     else
         return;
 }

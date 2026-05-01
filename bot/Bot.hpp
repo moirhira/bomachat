@@ -40,7 +40,6 @@ class Bot{
         void handelCommand(command cmd);
         command parseCommand(std::string cmdLine);
         void handlePrivmsg(const command &cmd);
-        void handleKick(const command &cmd);
     public:
         Bot(int port, std::string address);
         ~Bot();
