@@ -259,7 +259,7 @@ int Server::init()
         return 1;
     }
 
-    if (listen(_sockfd, 10) < 0)
+    if (listen(_sockfd, SOMAXCONN) < 0)
     {
         close(_sockfd);
         perror("listen faild: ");
