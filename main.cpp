@@ -2,8 +2,10 @@
 #include <signal.h>
 
 
+
 int main(int ac, char **av){
     signal(SIGPIPE, SIG_IGN);
+    signal(SIGINT, );
     if (ac != 3)
     {
         std::cerr << "Usage : ./server <port> <password>" << std::endl;
