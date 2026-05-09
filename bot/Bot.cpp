@@ -275,7 +275,7 @@ void Bot::run() {
             {
                 buffer[byts] = '\0';
                 _buffer.append(buffer, byts);
-                if (_buffer.size() > 4096)
+                if (_buffer.size() > 512)
                 {
                     close(_fd);
                     std::cout << "client disconnected (buffer overflow)" << std::endl;
