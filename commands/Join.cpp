@@ -58,12 +58,12 @@ void handleJoin(Client *client, std::vector<std::string> params, std::vector<Cha
 {
     if (params.size() < 1)
     {
-        sendReply(client, 461, "Not enough parameters", "JOIN");
+        sendReply(client, "461", "Not enough parameters", "JOIN");
         return;
     }
     if (!client->isReg())
     {
-        sendReply(client, 451, "You have not registered", "JOIN");
+        sendReply(client, "451", "You have not registered", "JOIN");
         return;
     }
     std::vector<std::string> channelList = splitCommaList(params[0]);
@@ -82,7 +82,7 @@ void handleJoin(Client *client, std::vector<std::string> params, std::vector<Cha
 
         if (!isValidChannelName(channelName))
         {
-            sendReply(client, 476, "Channel name is invalid", channelName);
+            sendReply(client, "476", "Channel name is invalid", channelName);
             continue;
         }
         bool found = false;
@@ -95,20 +95,20 @@ void handleJoin(Client *client, std::vector<std::string> params, std::vector<Cha
                     break;
                 if (channels[j].isInviteOnly() && !channels[j].isInvited(client))
                 {
-                    sendReply(client, 473, "You are not invited to this channel", channelName);
+                    sendReply(client, "473", "You are not invited to this channel", channelName);
                     break;
                 }
                 if (!channels[j].getPass().empty())
                 {
                     if (channels[j].getPass() != key)
                     {
-                        sendReply(client, 475, "Invalid channel password", channelName);
+                        sendReply(client, "475", "Invalid channel password", channelName);
                         break;
                     }
                 }
                 if (channels[j].getUserlimit() > 0 && channels[j].getUserlimit() <= static_cast<int>(channels[j].getMembers().size()))
                 {
-                    sendReply(client, 471, "Channel is full", channelName);
+                    sendReply(client, "471", "Channel is full", channelName);
                     break;
                 }
                 channels[j].addMember(client);

@@ -3,10 +3,13 @@
 Client::Client() : _fd(-1), _authenticated(false), _registred(false)
 {}
 
-Client::Client(int fd) : _fd(fd), _authenticated(false), _registred(false)
+Client::Client(int fd) : _fd(fd), _authenticated(false), _registred(false), _toDisconnect(false)
 {}
 
-Client::~Client() {}
+Client::~Client() 
+{
+	close(this->_fd);
+}
 
 int Client::getFd() const {
     return _fd;
@@ -22,6 +25,10 @@ std::string Client::getUsername() const {
 
 std::string Client::getRealname() const { 
     return _realname;
+}
+
+bool Client::getToDisconnect() const {
+    return _toDisconnect;
 }
 
 bool Client::isAuth() {
@@ -62,6 +69,9 @@ void Client::setRegistered(bool value) {
     _registred = value;
 }
 
+void Client::setToDisconnect(bool value) {
+    _toDisconnect = value;
+}
 
 void Client::appendToBuffer(std::string data){ 
     _buffer += data;

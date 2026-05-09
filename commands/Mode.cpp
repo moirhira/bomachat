@@ -6,7 +6,7 @@ void handleMode(Client *client, std::vector<std::string> params, std::vector<Cha
 {
     if (params.size() < 1)
     {
-        sendReply(client, 461, "Not enough parameters", "MODE");
+        sendReply(client, "461", "Not enough parameters", "MODE");
         return;
     }
     std::string target = params[0];
@@ -14,7 +14,7 @@ void handleMode(Client *client, std::vector<std::string> params, std::vector<Cha
     {
         if (target != client->getNickname())
         {
-            sendReply(client, 502, "Can't change mode for other users", "MODE");
+            sendReply(client, "502", "Can't change mode for other users", "MODE");
             return;
         }
         std::string reply = ":server 221 " + client->getNickname() + " +\r\n";
@@ -52,20 +52,20 @@ void handleMode(Client *client, std::vector<std::string> params, std::vector<Cha
             client->sendMessage(reply);
             return;
         }
-        sendReply(client, 403, "Channel doesn't exist", "MODE");
+        sendReply(client, "403", "Channel doesn't exist", "MODE");
         return;
     }
     
 
     if (!client->isReg())
     {
-        sendReply(client, 451, "You have not registered", "MODE");
+        sendReply(client, "451", "You have not registered", "MODE");
         return;
     }
 
     if (params[1].empty() || (params[1][0] != '+' && params[1][0] != '-'))
     {
-        sendReply(client, 472, "Unknown mode flag", "MODE");
+        sendReply(client, "472", "Unknown mode flag", "MODE");
         return;
     }
 
@@ -76,7 +76,7 @@ void handleMode(Client *client, std::vector<std::string> params, std::vector<Cha
 
         if (!channels[i].isOperator(client))
         {
-            sendReply(client, 482, "You're not channel operator", "MODE");
+            sendReply(client, "482", "You're not channel operator", "MODE");
             return;
         }
 
@@ -110,7 +110,7 @@ void handleMode(Client *client, std::vector<std::string> params, std::vector<Cha
                 {
                     if (nextArgId >= params.size())
                     {
-                        sendReply(client, 461, "Not enough parameters", "MODE");
+                        sendReply(client, "461", "Not enough parameters", "MODE");
                         return;
                     }
                     const std::string &targetNick = params[nextArgId++];
@@ -150,7 +150,7 @@ void handleMode(Client *client, std::vector<std::string> params, std::vector<Cha
                     {
                         if (nextArgId >= params.size())
                         {
-                            sendReply(client, 461, "Not enough parameters", "MODE");
+                            sendReply(client, "461", "Not enough parameters", "MODE");
                             return;
                         }
                         const std::string &limitStr = params[nextArgId];
@@ -158,14 +158,14 @@ void handleMode(Client *client, std::vector<std::string> params, std::vector<Cha
                         {
                             if (!isdigit(static_cast<unsigned char>(limitStr[k])))
                             {
-                                sendReply(client, 460, "User limit should be a number", "MODE");
+                                sendReply(client, "460", "User limit should be a number", "MODE");
                                 return;
                             }
                         }
                         long newUserLimit = strtol(limitStr.c_str(), NULL, 10);
                         if (newUserLimit <= 0 || newUserLimit >= 1024)
                         {
-                            sendReply(client, 460, "User limit should be 1 >=  <= 1024", "MODE");
+                            sendReply(client, "460", "User limit should be 1 >=  <= 1024", "MODE");
                             return;
                         }
                         channels[i].setUsrlimit(static_cast<int>(newUserLimit));
@@ -188,7 +188,7 @@ void handleMode(Client *client, std::vector<std::string> params, std::vector<Cha
                     {
                         if (nextArgId >= params.size())
                         {
-                            sendReply(client, 461, "Not enough parameters", "MODE");
+                            sendReply(client, "461", "Not enough parameters", "MODE");
                             return;
                         }
                         channels[i].setPass(params[nextArgId]);
@@ -217,7 +217,7 @@ void handleMode(Client *client, std::vector<std::string> params, std::vector<Cha
                 }
                 default:
                 {
-                    sendReply(client, 472, std::string("Unknown mode flag ") + flag, "MODE");
+                    sendReply(client, "472", std::string("Unknown mode flag ") + flag, "MODE");
                     return;
                 }
             }

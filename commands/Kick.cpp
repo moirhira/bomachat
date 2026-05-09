@@ -5,12 +5,12 @@ void handleKick(Client *client, std::vector<std::string> params, std::vector<Cha
 {
     if (params.size() < 2)
     {
-        sendReply(client, 461, "Not enough parameters", "KICK");
+        sendReply(client, "461", "Not enough parameters", "KICK");
         return;
     }
     if (params[0][0] != '#')
     {
-        sendReply(client, 476, "Channel name should start with #", params[0]);
+        sendReply(client, "476", "Channel name should start with #", params[0]);
         return;
     }
     std::string targetChannel = params[0];
@@ -45,22 +45,22 @@ void handleKick(Client *client, std::vector<std::string> params, std::vector<Cha
                             return;
                         }
                     }
-                    sendReply(client, 441, "They aren't on that channel", targetUser + " " + targetChannel);
+                    sendReply(client, "441", "They aren't on that channel", targetUser + " " + targetChannel);
                     return;
                 }
                 else
                 {
-                    sendReply(client, 482, "You're not channel operator", targetChannel);
+                    sendReply(client, "482", "You're not channel operator", targetChannel);
                     return;
                 }
             }
             else
             {
-                sendReply(client, 442, "You are not on that channel", targetChannel);
+                sendReply(client, "442", "You are not on that channel", targetChannel);
                 return;
             }
         }
     }
-    sendReply(client, 403, "Channel doesn't exist", targetChannel);
+    sendReply(client, "403", "Channel doesn't exist", targetChannel);
     return;
 }

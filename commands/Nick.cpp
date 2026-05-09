@@ -2,57 +2,55 @@
 #include "Server.hpp"
 #include <cctype>
 
-
-void handleNick(Client *client, std::vector<std::string> &params, std::vector<Client *> &clients, std::vector<Channel> &channels)
+static bool isValidNickChar(char c)
 {
-    if (params.size() < 1)
-    {
-        sendReply(client, 431, "No nickname given", "NICK");
-        return;
-    }
-    if (!client->isAuth())
-    {
-        sendReply(client, 451, "You have not registered", "NICK");
-        return;
-    }
-    std::string newNick = params[0];
-    if (newNick.empty())
-    {
-        sendReply(client, 431, "No nickname given", "NICK");
-        return;
-    }
+    return isalnum(c) || c == '-' || c == '_'
+        || c == '[' || c == ']' || c == '\\'
+        || c == '^' || c == '{' || c == '}'
+        || c == '|';
+}
 
-    if (isdigit(newNick[0]) || newNick[0] == '-')
+static bool isValidNick(const std::string &nick)
+{
+    if (nick.size() > 9 || isdigit(nick[0]) || nick[0] == '-')
+        return false;
+    for (size_t i = 0; i < nick.size(); i++)
     {
-        sendReply(client, 432, "Nickname cannot start with \"-\" or Number", "NICK");
-        return;
+        if (!isValidNickChar(nick[i]))
+            return false;
     }
-    for (size_t i = 0; i < newNick.size(); i++)
+    return true;
+}
+
+Client *findClientByNick(std::vector<Client *> &clients, const std::string &nick, Client *exclude)
+{
+    for (size_t i = 0; i < clients.size(); i++)
     {
-        if (!isalnum(newNick[i]) && newNick[i] != '-' && newNick[i] != '_' && newNick[i] != '[' && newNick[i] != ']' && newNick[i] != '\\' && newNick[i] != '^' && newNick[i] != '{' && newNick[i] != '}' && newNick[i] != '|')
-        {
-            sendReply(client, 432, "Nickname can only contain letters, digits, and - _ ' [ ] \\ ^ { } |", "NICK");
-            return;
-        }
+        if (clients[i] != exclude && clients[i]->getNickname() == nick)
+            return clients[i];
     }
-    if (newNick.size() > 9)
-    {
-        sendReply(client, 432, "Nickname too long", "NICK");
-        return;
-    }
-    for (size_t j = 0; j < clients.size(); j++)
-    {
-        if (clients[j]->getFd() != client->getFd() && clients[j]->getNickname() == newNick)
-        {
-            sendReply(client, 433, "Nickname is already in use", newNick);
-            return;
-        }
-    }
+    return NULL;
+}
+
+void handleNick(Client *client, std::vector<std::string> params,
+                std::vector<Client *> &clients, std::vector<Channel> &channels)
+{
+    if (!client->isAuth())
+        return sendReply(client, "451", "You have not registered", "NICK");
+    if (params.empty() || params[0].empty())
+        return sendReply(client, "431", "No nickname given", "NICK");
+
+    std::string newNick = params[0];
+
+    if (!isValidNick(newNick))
+        return sendReply(client, "432", "Erroneous nickname", newNick);
+    if (findClientByNick(clients, newNick, client))
+        return sendReply(client, "433", "Nickname is already in use", newNick);
+
     bool wasReg = client->isReg();
     std::string oldNick = client->getNickname();
 
     client->setNickname(newNick);
-
     if (!client->getUsername().empty())
         client->setRegistered(true);
 
@@ -62,11 +60,10 @@ void handleNick(Client *client, std::vector<std::string> &params, std::vector<Cl
     }
     else if (wasReg)
     {
-        std::string nickMsg = ":" + oldNick + "!" + client->getUsername() + "@localhost NICK :" + newNick + "\r\n";
-        for (size_t j = 0; j < channels.size(); j++)
-        {
-            channels[j].brodcastMessage(nickMsg, client);
-        }
+        std::string nickMsg = ":" + oldNick + "!" + client->getUsername()
+                            + "@localhost NICK :" + newNick + "\r\n";
         client->sendMessage(nickMsg);
+        for (size_t i = 0; i < channels.size(); i++)
+            channels[i].brodcastMessage(nickMsg, client);
     }
 }

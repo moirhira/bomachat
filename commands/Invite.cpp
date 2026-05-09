@@ -6,7 +6,7 @@ void handleInvite(Client *client, std::vector<std::string> params, std::vector<C
 {
     if (params.size() < 2)
     {
-        sendReply(client, 461, "Not enough parameters", "INVITE");
+        sendReply(client, "461", "Not enough parameters", "INVITE");
         return;
     }
     std::string targetClientNick = params[0];
@@ -23,7 +23,7 @@ void handleInvite(Client *client, std::vector<std::string> params, std::vector<C
     }
     if (!target)
     {
-        sendReply(client, 401, "No such nick", targetClientNick);
+        sendReply(client, "401", "No such nick", targetClientNick);
         return;
     }
 
@@ -33,19 +33,19 @@ void handleInvite(Client *client, std::vector<std::string> params, std::vector<C
         {
             if (!channels[i].isMember(client))
             {
-                sendReply(client, 442, "You are not on that channel", targetChannel);
+                sendReply(client, "442", "You are not on that channel", targetChannel);
                 return;
             }
 
             if (!channels[i].isOperator(client))
             {
-                sendReply(client, 482, "You're not channel operator", targetChannel);
+                sendReply(client, "482", "You're not channel operator", targetChannel);
                 return;
             }
 
             if (channels[i].isMember(target))
             {
-                sendReply(client, 443, "is already on channel", targetClientNick + " " + targetChannel);
+                sendReply(client, "443", "is already on channel", targetClientNick + " " + targetChannel);
                 return;
             }
 
@@ -59,5 +59,5 @@ void handleInvite(Client *client, std::vector<std::string> params, std::vector<C
             return;
         }
     }
-    sendReply(client, 403, "No such channel", targetChannel);
+    sendReply(client, "403", "No such channel", targetChannel);
 }

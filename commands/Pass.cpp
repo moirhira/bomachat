@@ -5,18 +5,17 @@ void handlePass(Client *client, std::vector<std::string> params, std::string pas
 {
     if (params.size() < 1)
     {
-        sendReply(client, 461, "Not enough parameters", "PASS");
+        sendReply(client, "461", "Not enough parameters", "PASS");
         return;
     }
     if (client->isAuth())
     {
-        sendReply(client, 462, "You are already registred!", "PASS");
+        sendReply(client, "462", "You are already registred!", "PASS");
         return;
     }
     if (password != params[0])
     {
-        sendReply(client, 464, "Worong password!", "PASS");
-        close(client->getFd());
+        sendReply(client, "464", "Wrong password!", "PASS");
         return;
     }
     client->setAuthenticated(true);

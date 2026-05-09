@@ -1,21 +1,19 @@
 #include "ServerCommands.hpp"
 #include "Server.hpp"
 
-void sendReply(Client *client, int errorCode, std::string errorMsg, std::string cmd)
+void sendReply(Client *client, std::string Code, std::string Msg, std::string cmd)
 {
     std::string nick = client->getNickname().empty() ? "*" : client->getNickname();
-    std::ostringstream oss;
-    oss << std::setw(3) << std::setfill('0') << errorCode;
-    std::string reply = ":server " + oss.str() + " " + nick + " " + cmd + " :" + errorMsg + "\r\n";
-    client->sendMessage(reply);
+    std::string commandPart = cmd.empty() ? "" : " " + cmd;
+    client->sendMessage(":server " + Code + " " + nick + commandPart + " :" + Msg + "\r\n");
 }
 
 void sendWelcome(Client *client)
 {
-    sendReply(client, 001, "Welcome to the IRC server " + client->getNickname(), "");
-    sendReply(client, 002, "Your host is ircserv", "");
-    sendReply(client, 003, "This server was created today", "");
-    sendReply(client, 004, "ircserv", "");
+    sendReply(client, "001", "Welcome to the IRC server " + client->getNickname(), "");
+    sendReply(client, "002", "Your host is ircserv", "");
+    sendReply(client, "003", "This server was created today", "");
+    sendReply(client, "004", "ircserv", "");
 }
 
 bool isPreRegistrationCommand(const std::string &cmd)
@@ -39,9 +37,6 @@ std::vector<std::string> splitCommaList(const std::string& list)
     return items;
 }
 
-
-
-
 void Server::handelCommand(command cmd, Client *client, int& i)
 {
     if (cmd.command.empty())
@@ -49,7 +44,7 @@ void Server::handelCommand(command cmd, Client *client, int& i)
 
     if (!client->isReg() && !isPreRegistrationCommand(cmd.command))
     {
-        sendReply(client, 451, "You have not registered", cmd.command);
+        sendReply(client, "451", "You have not registered", cmd.command);
         return;
     }
 
@@ -103,7 +98,7 @@ void Server::handelCommand(command cmd, Client *client, int& i)
         handleQuit(client, cmd.params, _channels, i, this);
     else
     {
-        sendReply(client, 421, "Unknown command", cmd.command);
+        sendReply(client, "421", "Unknown command", cmd.command);
     }
 }
 
