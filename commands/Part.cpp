@@ -5,7 +5,7 @@ void handlePart(Client *client, std::vector<std::string> params, std::vector<Cha
     (void)channels;
     if (params.size() < 1)
     {
-        sendReply(client, 461, "Not enough parameters", "PART");
+        sendReply(client, "461", "Not enough parameters", "PART");
         return;
     }
     std::string reason;
@@ -17,7 +17,7 @@ void handlePart(Client *client, std::vector<std::string> params, std::vector<Cha
         std::string channelName = channelList[i];
         if (channelName[0] != '#')
         {
-            sendReply(client, 476, "Channel name should start with #", channelName);
+            sendReply(client, "476", "Channel name should start with #", channelName);
             return;
         }
         bool found = false;
@@ -28,7 +28,7 @@ void handlePart(Client *client, std::vector<std::string> params, std::vector<Cha
                 found = true;
                 if (!channels[j].isMember(client))
                 {
-                    sendReply(client, 476, "You are not on that channel",channelName);
+                    sendReply(client, "476", "You are not on that channel",channelName);
                     break;
                 }
                 channels[j].removeClientEverywhere(client);
@@ -47,7 +47,7 @@ void handlePart(Client *client, std::vector<std::string> params, std::vector<Cha
         }
         if (!found)
         {
-            sendReply(client, 403, "Channel doesn't exist", channelName);
+            sendReply(client, "403", "Channel doesn't exist", channelName);
             return;
         }
     }

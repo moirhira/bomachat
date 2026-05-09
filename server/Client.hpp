@@ -2,7 +2,7 @@
 #define CLIENRT_HPP
 #include <string>
 #include <poll.h>
-
+#include <unistd.h>
 class Client {
     private:
         int _fd;
@@ -13,6 +13,7 @@ class Client {
         bool _registred;
         std::string _buffer;
         std::string _outBuffer;
+        bool _toDisconnect;
 
     public:
         Client();
@@ -24,6 +25,7 @@ class Client {
         std::string getNickname() const;
         std::string getUsername() const;
         std::string getRealname() const;
+        bool getToDisconnect() const;
         bool isAuth();
         bool isReg();
         std::string& getBuffer();
@@ -32,6 +34,7 @@ class Client {
         void setNickname(std::string nickname);
         void setUsername(std::string username);
         void setRealname(std::string realname);
+        void setToDisconnect(bool value);
         void setAuthenticated(bool value);
         void setRegistered(bool value);
         void appendToBuffer(std::string data);

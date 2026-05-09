@@ -2,58 +2,48 @@
 #include "Server.hpp"
 
 
-void handlePrivmsg(Client *client, std::vector<std::string> params, std::vector<Client *> &clients, std::vector<Channel> &channels)
+static Channel *findChannel(std::vector<Channel> &channels, const std::string &name)
 {
-    if (params.size() == 0)
+    for (size_t i = 0; i < channels.size(); i++)
     {
-        sendReply(client, 411, "No recipient given (PRIVMSG)", "PRIVMSG");
-        return;
+        if (channels[i].getName() == name)
+            return &channels[i];
     }
-    if (params.size() == 1)
-    {
-        sendReply(client, 412, "No text to send", "PRIVMSG");
-        return;
-    }
+    return NULL;
+}
+
+void handlePrivmsg(Client *client, std::vector<std::string> params,
+                    std::vector<Client *> &clients, std::vector<Channel> &channels)
+{
+    if (params.empty())
+        return sendReply(client, "411", "No recipient given (PRIVMSG)", "PRIVMSG");
+    if (params.size() < 2)
+        return sendReply(client, "412", "No text to send", "PRIVMSG");
+
     std::string target = params[0];
-    std::string msg = params[1];
+    std::string fullMsg = ":" + client->getNickname() + "!"
+                        + client->getUsername() + "@localhost PRIVMSG "
+                        + target + " :" + params[1] + "\r\n";
+
     if (target[0] == '#')
     {
-        for (size_t i = 0; i < channels.size(); i++)
-        {
-            if (channels[i].getName() == target)
-            {
-                if (!channels[i].isMember(client))
-                {
-                    sendReply(client, 442, "You are not on that channel", target);
-                    return;
-                }
+        Channel *channel = findChannel(channels, target);
+        if (!channel)
+            return sendReply(client, "403", "No such channel", target);
+        if (!channel->isMember(client))
+            return sendReply(client, "442", "You're not on that channel", target);
 
-                std::vector<Client *> members = channels[i].getMembers();
-                for (size_t j = 0; j < channels[i].getMembers().size(); j++)
-                {
-                    if (client->getFd() != members[j]->getFd())
-                    {
-                        std::string prvMsg = ":" + client->getNickname() + "!" + client->getUsername() + "@localhost PRIVMSG " + target + " :" + msg + "\r\n";
-                        members[j]->sendMessage(prvMsg);
-                    }
-                }
-                return;
-            }
+        std::vector<Client *> members = channel->getMembers();
+        for (size_t i = 0; i < members.size(); i++)
+        {
+            if (members[i]->getFd() != client->getFd())
+                members[i]->sendMessage(fullMsg);
         }
-        sendReply(client, 403, "Channel doesn't exist", target);
         return;
     }
 
-    for (size_t i = 0; i < clients.size(); i++)
-    {
-        if (clients[i]->getNickname() == target)
-        {
-            std::string prvMsg = ":" + client->getNickname() + "!" +
-                                 client->getUsername() + "@localhost PRIVMSG " +
-                                 target + " :" + msg + "\r\n";
-            clients[i]->sendMessage(prvMsg);
-            return;
-        }
-    }
-    sendReply(client, 401, "No such nick/channel", target);
+    Client *dest = findClientByNick(clients, target, NULL);
+    if (!dest)
+        return sendReply(client, "401", "No such nick/channel", target);
+    dest->sendMessage(fullMsg);
 }

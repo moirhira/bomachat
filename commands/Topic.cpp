@@ -5,12 +5,12 @@ void handleTopic(Client *client, std::vector<std::string> params, std::vector<Ch
 {
     if (params.size() < 1)
     {
-        sendReply(client, 461, "Not enough parameters", "TOPIC");
+        sendReply(client, "461", "Not enough parameters", "TOPIC");
         return;
     }
     if (params[0][0] != '#')
     {
-        sendReply(client, 476, "Channel name should start with #", params[0]);
+        sendReply(client, "476", "Channel name should start with #", params[0]);
         return;
     }
     for (size_t i = 0; i < channels.size(); i++)
@@ -19,20 +19,20 @@ void handleTopic(Client *client, std::vector<std::string> params, std::vector<Ch
         {
             if (!channels[i].isMember(client))
             {
-                sendReply(client, 442, "You are not on that channel", params[0]);
+                sendReply(client, "442", "You are not on that channel", params[0]);
                 return;
             }
             if (params.size() == 1)
             {
                 if (!channels[i].getTopic().empty())
-                    sendReply(client, 332, channels[i].getTopic(), params[0]);
+                    sendReply(client, "332", channels[i].getTopic(), params[0]);
                 else
-                    sendReply(client, 331, "No topic is set", params[0]);
+                    sendReply(client, "331", "No topic is set", params[0]);
                 return;
             }
             if (channels[i].isTopicRestricted() && !channels[i].isOperator(client))
             {
-                sendReply(client, 482, "You are not allowed to change the topic", params[0]);
+                sendReply(client, "482", "You are not allowed to change the topic", params[0]);
                 return;
             }
             channels[i].setTopic(params[1]);
@@ -45,5 +45,5 @@ void handleTopic(Client *client, std::vector<std::string> params, std::vector<Ch
             return;
         }
     }
-    sendReply(client, 403, "Channel doesn't exist", params[0]);
+    sendReply(client, "403", "Channel doesn't exist", params[0]);
 }

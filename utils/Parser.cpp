@@ -5,50 +5,36 @@
 command Server::parseCommand(std::string cmdLine)
 {
     command cmdStruct;
+    std::string token;
+    std::string rest;
 
-    if (cmdLine.empty())
+    size_t end = cmdLine.find_last_not_of("\r\n");
+    if (end == std::string::npos)
         return cmdStruct;
+    cmdLine = cmdLine.substr(0, end + 1);
 
-    size_t start = cmdLine.find_first_not_of(" \t\n\r");
-    if (start == std::string::npos)
-        return cmdStruct;
-    std::string trimmedCmd = cmdLine.substr(start);
+    std::istringstream iss(cmdLine);
 
-    if (trimmedCmd[0] == ':')
+    if (cmdLine[0] == ':')
     {
-        size_t spacePos = trimmedCmd.find(' ');
-        if (spacePos == std::string::npos)
+        iss >> token;
+        if (iss.eof())
             return cmdStruct;
-        trimmedCmd = trimmedCmd.substr(spacePos + 1);
     }
-
-    size_t spacePos = trimmedCmd.find(' ');
-    cmdStruct.command = trimmedCmd.substr(0, spacePos);
-
-    for (size_t i = 0; i < cmdStruct.command.size(); i++)
-    {
-        cmdStruct.command[i] = toupper(cmdStruct.command[i]);
-    }
-
-    if (spacePos == std::string::npos)
+    if (!(iss >> cmdStruct.command))
         return cmdStruct;
-    trimmedCmd.erase(0, spacePos + 1);
+    for (size_t i = 0; i < cmdStruct.command.size(); i++)
+        cmdStruct.command[i] = toupper(cmdStruct.command[i]);
 
-    while (!trimmedCmd.empty())
+    while (iss >> token)
     {
-        if (trimmedCmd[0] == ':')
+        if (token[0] == ':')
         {
-            cmdStruct.params.push_back(trimmedCmd.substr(1));
+            std::getline(iss, rest);
+            cmdStruct.params.push_back(token.substr(1) + rest);
             break;
         }
-        size_t pos = trimmedCmd.find(' ');
-        if (pos == std::string::npos)
-        {
-            cmdStruct.params.push_back(trimmedCmd);
-            break;
-        }
-        cmdStruct.params.push_back(trimmedCmd.substr(0, pos));
-        trimmedCmd.erase(0, pos + 1);
+        cmdStruct.params.push_back(token);
     }
     return cmdStruct;
 }
