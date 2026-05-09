@@ -254,6 +254,10 @@ void Bot::run() {
             perror("poll failed: ");
             break;
         }
+        if (fds[0].revents & POLLOUT)
+        {
+            std::string &out = 
+        }
         if (fds[0].revents & POLLIN)
         {
             char buffer[1024];

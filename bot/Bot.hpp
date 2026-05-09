@@ -33,6 +33,7 @@ class Bot{
         std::string _username;
         std::string _realname;
         std::string _buffer;
+        std::string _outBuffer;
         int _sPort;
         std::string _sAddress;
         std::map<std::string, std::time_t> _seenMap;
@@ -51,7 +52,12 @@ class Bot{
         int connectToServer(std::string password);
         void run();
 
-        
+
+        void sendMessage(const std::string & msg);
+        std::string &getOUtBuffer();
+        bool hasPendingOutput() const;
+        bool hasPendingMessages() const;
+        short getClientEvents() const;
 
 };
 
