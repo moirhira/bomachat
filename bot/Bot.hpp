@@ -42,6 +42,12 @@ class Bot{
         void    handelCommand(command cmd);
         void    handlePrivmsg(const command &cmd);
 
+        void sendMessge(const std::string &msg);
+        bool flushSendBuffer(struct pollfd &pfd);
+        bool handleRecv(struct pollfd &pfd);
+        bool doRegistration();
+
+
     public:
         Bot(int port, std::string address);
         ~Bot();

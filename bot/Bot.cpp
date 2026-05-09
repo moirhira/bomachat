@@ -2,8 +2,12 @@
 #include <cstring>
 
 
-Bot::Bot(int port, std::string address) : _sPort(port), _sAddress(address) {}
-Bot::~Bot() {}
+Bot::Bot(int port, std::string address) : _fd(-1),_sPort(port), _sAddress(address) {}
+
+Bot::~Bot() {
+    if (_fd >= 0)
+        close(_fd);
+}
 
 
 int Bot::getServerPort() {
@@ -13,6 +17,7 @@ int Bot::getServerPort() {
 std::string  Bot::getServerAdr() {
     return _sAddress;
 }
+
 
 
 int Bot::init(std::string nickName, std::string userName, std::string realName) {
@@ -28,7 +33,26 @@ int Bot::init(std::string nickName, std::string userName, std::string realName) 
     }
     _fd = _sockfd;
     return 1;
-};
+}
+
+
+void Bot::sendMessge(const std::string &msg) {
+    _outBuffer += msg;
+}
+
+
+bool Bot::flushSendBuffer(struct pollfd &pfd) {
+    while
+
+}
+
+
+
+bool Bot::doRegistration() {
+
+}
+
+
 
 int Bot::connectToServer(std::string password) {
     struct sockaddr_in serverAddr;
@@ -243,55 +267,66 @@ void Bot::handelCommand(command cmd)
         return;
 }
 
+
+
+bool Bot::handleRecv(struct pollfd &pfd) {
+    char buffer[512];
+    int byts = recv(pfd.fd, buffer, sizeof(buffer) - 1, 0);
+    if (byts < 0)
+    {
+        if (errno == EWOULDBLOCK || errno == EAGAIN)
+            return;
+        perror("recv failed: ");
+        return false;
+    }
+    if (byts == 0)
+    {
+        std::cout << "client disconnected" << std::endl;
+        return false;
+    }
+
+    _outBuffer.append(buffer, byts);
+    if (_buffer.size() > 4096)
+    {
+        std::cout << "Receive buffer overflow — clearing." << std::endl;
+        _outBuffer.clear();
+        return true;
+    }
+
+        
+    size_t pos;
+    while ((pos = _buffer.find("\r\n")) != std::string::npos)
+    {
+        std::string line = _buffer.substr(0, pos);
+        _buffer.erase(0, pos + 2);
+        command cmd = parseCommand(line);
+        handelCommand(cmd);
+    }
+    return true;
+}
+
+
 void Bot::run() {
-    pollfd fds[1];
-    fds[0].fd = _fd;
-    fds[0].events = POLLIN;
+    struct pollfd pfd;
+    pfd.fd = _fd;
+    pfd.events = POLLIN;
+
     while (true)
     {
-        if (poll(fds , 1, 500) < 0)
+        pfd.events = POLLIN;
+        if (!_outBuffer.empty())
+            pfd.events |= POLLOUT;
+
+        if (poll(&pfd , 1, 500) < 0)
         {
-            perror("poll failed: ");
+            perror("poll");
             break;
         }
-        if (fds[0].revents & POLLIN)
+
+        if (pfd.revents & POLLIN)
         {
-            char buffer[1024];
-            int byts = recv(fds[0].fd, buffer, sizeof(buffer) - 1, 0);
-            if (byts < 0)
-            {
-                if (errno == EWOULDBLOCK || errno == EAGAIN)
-                    return;
-                perror("recv failed: ");
-                return;
-            }
-            if (byts == 0)
-            {
-                close(_fd);
-                std::cout << "client disconnected" << std::endl;
+            if (!handleRecv(pfd))
                 break;
-            }
-            else
-            {
-                buffer[byts] = '\0';
-                _buffer.append(buffer, byts);
-                if (_buffer.size() > 512)
-                {
-                    close(_fd);
-                    std::cout << "client disconnected (buffer overflow)" << std::endl;
-                    return;
-                }
-                size_t pos;
-                while ((pos = _buffer.find("\r\n")) != std::string::npos)
-                {
-                    std::string line = _buffer.substr(0, pos);
-                    _buffer.erase(0, pos + 2);
-                    if (!line.empty() && line[line.size() - 1] == '\r')
-                        line.erase(line.size() - 1);
-                    command cmd = parseCommand(line);
-                    handelCommand(cmd);
-                }
-            }
         }
     }
 }
