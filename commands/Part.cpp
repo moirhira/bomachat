@@ -38,6 +38,10 @@ void handlePart(Client *client, std::vector<std::string> params, std::vector<Cha
                 partMsg += "\r\n";
                 channels[j].brodcastMessage(partMsg, client);
                 client->sendMessage(partMsg);
+                if (channels[j].isEmpty())
+                {
+                    channels.erase(channels.begin() + j);
+                }
                 break;
             }
         }
