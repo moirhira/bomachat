@@ -54,9 +54,9 @@ class Bot{
 
 
         void sendMessage(const std::string & msg);
-        std::string &getOUtBuffer();
+        std::string &getOutBuffer();
         bool hasPendingOutput() const;
-        bool hasPendingMessages() const;
+        // bool hasPendingMessages() const;
         short getClientEvents() const;
 
 };

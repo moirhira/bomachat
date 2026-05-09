@@ -14,6 +14,27 @@ std::string  Bot::getServerAdr() {
     return _sAddress;
 }
 
+void Bot::sendMessage(const std::string& msg){
+    _outBuffer += msg;
+}
+
+std::string &Bot::getOutBuffer()
+{
+    return _outBuffer;
+}
+
+bool Bot::hasPendingOutput() const {
+    return !_outBuffer.empty();
+}
+
+
+short Bot::getClientEvents() const {
+    short events = POLLIN;
+    if (hasPendingOutput()) {
+        events |= POLLOUT;
+    }
+    return events;
+}
 
 int Bot::init(std::string nickName, std::string userName, std::string realName) {
     _nickname = nickName;
