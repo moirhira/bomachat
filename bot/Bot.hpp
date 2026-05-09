@@ -38,28 +38,23 @@ class Bot{
         std::string _sAddress;
         std::map<std::string, std::time_t> _seenMap;
         
-        void handelCommand(command cmd);
         command parseCommand(std::string cmdLine);
-        void handlePrivmsg(const command &cmd);
+        void    handelCommand(command cmd);
+        void    handlePrivmsg(const command &cmd);
+
     public:
         Bot(int port, std::string address);
         ~Bot();
 
+        int             getServerPort();
+        std::string	    getServerAdr();
+
         int init(std::string nickName, std::string userName, std::string realName);
 
-        int getServerPort();
-        std::string  getServerAdr();
         int connectToServer(std::string password);
         void run();
 
-
-        void sendMessage(const std::string & msg);
-        std::string &getOutBuffer();
-        bool hasPendingOutput() const;
-        // bool hasPendingMessages() const;
-        short getClientEvents() const;
+        
 
 };
-
-
 #endif

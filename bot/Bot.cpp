@@ -14,27 +14,6 @@ std::string  Bot::getServerAdr() {
     return _sAddress;
 }
 
-void Bot::sendMessage(const std::string& msg){
-    _outBuffer += msg;
-}
-
-std::string &Bot::getOutBuffer()
-{
-    return _outBuffer;
-}
-
-bool Bot::hasPendingOutput() const {
-    return !_outBuffer.empty();
-}
-
-
-short Bot::getClientEvents() const {
-    short events = POLLIN;
-    if (hasPendingOutput()) {
-        events |= POLLOUT;
-    }
-    return events;
-}
 
 int Bot::init(std::string nickName, std::string userName, std::string realName) {
     _nickname = nickName;
@@ -274,31 +253,6 @@ void Bot::run() {
         {
             perror("poll failed: ");
             break;
-        }
-        if (fds[0].revents & POLLOUT)
-        {
-            std::string &out = getOutBuffer();
-            if (out.empty())
-                continue;
-
-            ssize_t sent = send(_fd, out.c_str(), out.size(), 0);
-
-            if (sent > 0)
-            {
-                out.erase(0, static_cast<size_t>(sent));
-            }
-            else if (sent < 0)
-            {
-                if (errno == EWOULDBLOCK || errno == EAGAIN)
-                    continue;
-                close(_fd);
-                break;
-            }
-            else
-            {
-                close(_fd);
-                continue;
-            }
         }
         if (fds[0].revents & POLLIN)
         {
