@@ -42,8 +42,31 @@ void Bot::sendMessge(const std::string &msg) {
 
 
 bool Bot::flushSendBuffer(struct pollfd &pfd) {
-    while
+    while (!_outBuffer.empty())
+    {
+        pfd.events = POLLIN | POLLOUT;
+        int ret = poll(&pfd, 1, 3000);
+        if ( ret < 0)
+        {
+            perror("poll faild :");
+            return false;
+        }
+        if (ret == 0)
+            continue;
+        if (!(pfd.revents & POLLOUT))
+            break;
 
+        ssize_t sent = send(_fd, _outBuffer.c_str(), _outBuffer.size(), 0);
+        if (sent < 0)
+        {
+            if (errno == EAGAIN || errno == EWOULDBLOCK)
+                break;
+            perror("send");
+            return false;
+        }
+        _outBuffer.erase(0, static_cast<size_t>(sent));
+    }
+    return true;
 }
 
 
@@ -321,6 +344,12 @@ void Bot::run() {
         {
             perror("poll");
             break;
+        }
+
+        if (pfd.revents & POLLOUT)
+        {
+            if (!flushSendBuffer(pfd))
+                break;
         }
 
         if (pfd.revents & POLLIN)
