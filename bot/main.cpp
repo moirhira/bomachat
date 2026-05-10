@@ -26,8 +26,7 @@ int main(int ac, char **av)
     if (!bot.init(nick, user, real, password))
         return 1;
 
-    if (!bot.connectToServer(password))
-        return 1;
+    bot.connectAsync();
     
     bot.run();
 

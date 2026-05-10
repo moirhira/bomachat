@@ -67,7 +67,7 @@ class Bot{
 
         int init(std::string &nickName, std::string &userName, std::string &realName, std::string &password);
 
-        int connectToServer(std::string password);
+        int connectAsync();
         void run();
 
         

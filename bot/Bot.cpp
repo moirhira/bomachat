@@ -38,12 +38,12 @@ int Bot::init(std::string& nickName, std::string& userName, std::string& realNam
 
 
 void Bot::sendMessge(const std::string &msg) {
-    _outBuffer += msg;
+    _sendBuffer += msg;
 }
 
 
 bool Bot::flushSendBuffer(struct pollfd &pfd) {
-    while (!_outBuffer.empty())
+    while (!_sendBuffer.empty())
     {
         pfd.events = POLLIN | POLLOUT;
         int ret = poll(&pfd, 1, 3000);
@@ -57,7 +57,7 @@ bool Bot::flushSendBuffer(struct pollfd &pfd) {
         if (!(pfd.revents & POLLOUT))
             break;
 
-        ssize_t sent = send(_fd, _outBuffer.c_str(), _outBuffer.size(), 0);
+        ssize_t sent = send(_fd, _sendBuffer.c_str(), _sendBuffer.size(), 0);
         if (sent < 0)
         {
             if (errno == EAGAIN || errno == EWOULDBLOCK)
@@ -65,7 +65,7 @@ bool Bot::flushSendBuffer(struct pollfd &pfd) {
             perror("send");
             return false;
         }
-        _outBuffer.erase(0, static_cast<size_t>(sent));
+        _sendBuffer.erase(0, static_cast<size_t>(sent));
     }
     return true;
 }
@@ -78,41 +78,38 @@ bool Bot::doRegistration() {
 
 
 
-int Bot::connectToServer(std::string password) {
-    struct sockaddr_in serverAddr;
+int Bot::connectAsync() {
+    sockaddr_in serverAddr;
+    std::memset(&serverAddr, 0, sizeof(serverAddr));
+
     serverAddr.sin_family = AF_INET;
     serverAddr.sin_port = htons(_sPort);
-    inet_pton(AF_INET, _sAddress.c_str(), &serverAddr.sin_addr);
 
-    int ret = connect(_fd, (struct sockaddr *)&serverAddr, sizeof(serverAddr));
+    if (inet_pton(AF_INET, _sAddress.c_str(), &serverAddr.sin_addr) <= 0)
+    {
+        std::cerr << "Invalid address" << std::endl;
+        return false;
+    }
+
+    int ret = connect(_fd, reinterpret_cast<sockaddr *>(&serverAddr), sizeof(serverAddr));
+
+    if (ret == 0)
+    {
+        _state == REGISTERING;
+        return true;
+    }
+
     if ( ret < 0 && errno != EINPROGRESS)
     {
         perror("connect failed: ");
         return false;
     }
 
-    struct pollfd pfd;
-    pfd.fd      = _fd;
-    pfd.events  = POLLOUT;
+    _state == CONNECTING;
 
-    int pollRet = poll(&pfd, 1, 10000);
-    if (pollRet <= 0)
-    {
-        std::cerr << "Connection timed out or poll error." << std::endl;
-        return false;
-    }
+    return true;
 
 
-
-    sendMessge("PASS " + password + "\r\n");
-    sendMessge("NICK " + _nickname + "\r\n");
-    sendMessge("USER " + _username + " 0 * :" + _realname + "\r\n");
-
-
-    if (!flushSendBuffer(pfd))
-        return false;
-
-    return doRegistration();
     // std::string passCmd = "PASS " + password + "\r\n";
     // send(_fd, passCmd.c_str(), passCmd.size(), 0);
 
@@ -121,38 +118,38 @@ int Bot::connectToServer(std::string password) {
 
     // send(_fd, "USER bot 0 * :bot\r\n", strlen("USER bot 0 * :bot\r\n"), 0);
 
-    char buffer[1024];
+    // char buffer[1024];
 
-    while (true)
-    {
-        size_t n = recv(_fd, buffer, sizeof(buffer) - 1, 0);
-        if (n <= 0)
-            break;
+    // while (true)
+    // {
+    //     size_t n = recv(_fd, buffer, sizeof(buffer) - 1, 0);
+    //     if (n <= 0)
+    //         break;
         
-        buffer[n] = '\0';
-        std::string data(buffer);
+    //     buffer[n] = '\0';
+    //     std::string data(buffer);
 
-        if (data.find("433") != std::string::npos)
-        {
-            _nickname = _nickname + "_";
-            nickCmd = "NICK " + _nickname + "\r\n";
-            send(_fd, nickCmd.c_str(), nickCmd.size(), 0);
-        }
-        else if (data.find("001") != std::string::npos)
-        {
-            std::cout << "Registred succesfully" << std::endl;
-            std::string joinCmd = "JOIN #general\r\n";
-            send(_fd, joinCmd.c_str(), joinCmd.size(), 0);
-            return 1;
-        }
-        else
-        {
-            break;
-        }
-    }
-    close(_fd);
-    std::cerr << "Failed to connect or register with the server." << std::endl;
-    return 0;
+    //     if (data.find("433") != std::string::npos)
+    //     {
+    //         _nickname = _nickname + "_";
+    //         nickCmd = "NICK " + _nickname + "\r\n";
+    //         send(_fd, nickCmd.c_str(), nickCmd.size(), 0);
+    //     }
+    //     else if (data.find("001") != std::string::npos)
+    //     {
+    //         std::cout << "Registred succesfully" << std::endl;
+    //         std::string joinCmd = "JOIN #general\r\n";
+    //         send(_fd, joinCmd.c_str(), joinCmd.size(), 0);
+    //         return 1;
+    //     }
+    //     else
+    //     {
+    //         break;
+    //     }
+    // }
+    // close(_fd);
+    // std::cerr << "Failed to connect or register with the server." << std::endl;
+    // return 0;
 }
 
 
