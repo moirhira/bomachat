@@ -24,18 +24,27 @@ struct command
     std::string prefix;
 };
 
+enum State
+{
+    CONNECTING,
+    REGISTERING,
+    RUNNING
+};
+
 
 
 class Bot{
     private:
         int _fd;
+        int _sPort;
+        std::string _sAddress;
+        State state;
+
         std::string _nickname;
         std::string _username;
         std::string _realname;
-        std::string _buffer;
+        std::string _recvBuffer;
         std::string _outBuffer;
-        int _sPort;
-        std::string _sAddress;
         std::map<std::string, std::time_t> _seenMap;
         
         command parseCommand(std::string cmdLine);

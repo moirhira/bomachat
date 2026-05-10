@@ -82,18 +82,43 @@ int Bot::connectToServer(std::string password) {
     serverAddr.sin_family = AF_INET;
     serverAddr.sin_port = htons(_sPort);
     inet_pton(AF_INET, _sAddress.c_str(), &serverAddr.sin_addr);
-    if (connect(_fd, (struct sockaddr *)&serverAddr, sizeof(serverAddr)) < 0 )
+
+    int ret = connect(_fd, (struct sockaddr *)&serverAddr, sizeof(serverAddr));
+    if ( ret < 0 && errno != EINPROGRESS)
     {
         perror("connect failed: ");
-        return 0;
+        return false;
     }
-    std::string passCmd = "PASS " + password + "\r\n";
-    send(_fd, passCmd.c_str(), passCmd.size(), 0);
 
-    std::string nickCmd = "NICK " + _nickname + "\r\n";
-    send(_fd, nickCmd.c_str(), nickCmd.size(), 0);
+    struct pollfd pfd;
+    pfd.fd      = _fd;
+    pfd.events  = POLLOUT;
 
-    send(_fd, "USER bot 0 * :bot\r\n", strlen("USER bot 0 * :bot\r\n"), 0);
+    int pollRet = poll(&pfd, 1, 10000);
+    if (pollRet <= 0)
+    {
+        std::cerr << "Connection timed out or poll error." << std::endl;
+        return false;
+    }
+
+
+
+    sendMessge("PASS " + password + "\r\n");
+    sendMessge("NICK " + _nickname + "\r\n");
+    sendMessge("USER " + _username + " 0 * :" + _realname + "\r\n");
+
+
+    if (!flushSendBuffer(pfd))
+        return false;
+
+    return doRegistration();
+    // std::string passCmd = "PASS " + password + "\r\n";
+    // send(_fd, passCmd.c_str(), passCmd.size(), 0);
+
+    // std::string nickCmd = "NICK " + _nickname + "\r\n";
+    // send(_fd, nickCmd.c_str(), nickCmd.size(), 0);
+
+    // send(_fd, "USER bot 0 * :bot\r\n", strlen("USER bot 0 * :bot\r\n"), 0);
 
     char buffer[1024];
 
