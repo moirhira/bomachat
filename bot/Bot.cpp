@@ -357,20 +357,31 @@ bool Bot::handleRecv(struct pollfd &pfd) {
 void Bot::run() {
     struct pollfd pfd;
     pfd.fd = _fd;
-    pfd.events = POLLIN;
 
     while (true)
     {
         pfd.events = POLLIN;
-        if (!_outBuffer.empty())
+
+        if (!_sendBuffer.empty() || _state == CONNECTING)
             pfd.events |= POLLOUT;
 
-        if (poll(&pfd , 1, 500) < 0)
+        int ret = poll(&pfd , 1, 5000);
+        if ( ret < 0)
         {
             perror("poll");
             break;
         }
 
+        if (ret == 0)
+            continue;
+
+        if (pfd.revents & (POLLERR | POLLHUP | POLLNVAL))
+        {
+            std::cerr << "Socket error" << std::endl;
+            break;
+        }
+
+        
         if (pfd.revents & POLLOUT)
         {
             if (!flushSendBuffer(pfd))

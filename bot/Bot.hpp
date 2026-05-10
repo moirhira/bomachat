@@ -38,13 +38,13 @@ class Bot{
         int _fd;
         int _sPort;
         std::string _sAddress;
-        State state;
+        State _state;
 
         std::string _nickname;
         std::string _username;
         std::string _realname;
         std::string _recvBuffer;
-        std::string _outBuffer;
+        std::string _sendBuffer;
         std::map<std::string, std::time_t> _seenMap;
         
         command parseCommand(std::string cmdLine);
