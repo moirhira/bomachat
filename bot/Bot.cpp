@@ -126,41 +126,6 @@ void Bot::handleLine(const std::string& line)
 }
 
 
-
-int Bot::connectAsync() {
-    sockaddr_in serverAddr;
-    std::memset(&serverAddr, 0, sizeof(serverAddr));
-
-    serverAddr.sin_family = AF_INET;
-    serverAddr.sin_port = htons(_sPort);
-
-    if (inet_pton(AF_INET, _sAddress.c_str(), &serverAddr.sin_addr) <= 0)
-    {
-        std::cerr << "Invalid address" << std::endl;
-        return false;
-    }
-
-    int ret = connect(_fd, reinterpret_cast<sockaddr *>(&serverAddr), sizeof(serverAddr));
-
-    if (ret == 0)
-    {
-        _state = REGISTERING;
-        return true;
-    }
-
-    if ( ret < 0 && errno != EINPROGRESS)
-    {
-        perror("connect failed: ");
-        return false;
-    }
-
-    _state = CONNECTING;
-
-    return true;
-}
-
-
-
 command Bot::parseCommand(std::string cmdLine)
 {
     command cmdStruct;
@@ -213,12 +178,19 @@ command Bot::parseCommand(std::string cmdLine)
     return cmdStruct;
 }
 
+
+
+
 void Bot::handlePrivmsg(const command &cmd) {
+    if (cmd.params.size() < 2)
+        return;
+
     std::string senderNick = cmd.prefix.substr(0, cmd.prefix.find("!"));
     if (senderNick.empty())
         return;
     
     _seenMap[senderNick] = std::time(NULL);
+
     std::string target = cmd.params[0];
     std::string targetReply = (target[0] == '#') ? target : senderNick;
 
@@ -233,7 +205,6 @@ void Bot::handlePrivmsg(const command &cmd) {
         if (iss >> extra)
         {
             std::string errorMsg = "PRIVMSG " + targetReply + " :This command does not take any parameters.\r\n";
-            // send(_fd, errorMsg.c_str(), errorMsg.size(), 0);
             sendMessge(errorMsg);
             return;
         }
@@ -242,7 +213,6 @@ void Bot::handlePrivmsg(const command &cmd) {
     {
         std::string helpMsg = "PRIVMSG " + targetReply + " :" + "Available commands: !help !time !roll !seen\r\n";
         sendMessge(helpMsg);
-        // send(_fd, helpMsg.c_str(), helpMsg.size(), 0);
     }
     if (commandName == "!time")
     {
@@ -250,7 +220,6 @@ void Bot::handlePrivmsg(const command &cmd) {
         std::string timeStr = std::ctime(&now);
         timeStr.erase(timeStr.find("\n"));
         std::string timeMsg = "PRIVMSG " + targetReply + " :Current time: " + timeStr + "\r\n";
-        // send(_fd, timeMsg.c_str(), timeMsg.size(), 0);
         sendMessge(timeMsg);
     }
     if (commandName == "!roll")
@@ -259,8 +228,7 @@ void Bot::handlePrivmsg(const command &cmd) {
         std::ostringstream oss;
         oss << roll;
         std::string rollMsg = "PRIVMSG " + targetReply + " :You rolled a " + oss.str() + "\r\n";
-        sendMessge(rollMsg)
-        // send(_fd, rollMsg.c_str(), rollMsg.size(), 0);
+        sendMessge(rollMsg);
     }
 
     if (commandName == "!seen")
@@ -272,7 +240,6 @@ void Bot::handlePrivmsg(const command &cmd) {
         {
             std::string seenMsg = "PRIVMSG " + targetReply + " :Please specify a nickname to check.\r\n";
             sendMessge(seenMsg);
-            // send(_fd, seenMsg.c_str(), seenMsg.size(), 0);
             return;
 
         }
@@ -289,8 +256,6 @@ void Bot::handlePrivmsg(const command &cmd) {
         {
             std::string seenMsg = "PRIVMSG " + targetReply + " :I haven't seen " + targetNickCheck + "\r\n";
             sendMessge(seenMsg);
-            // send(_fd, seenMsg.c_str(), seenMsg.size(), 0);
-
         }
         else
         {
@@ -301,10 +266,8 @@ void Bot::handlePrivmsg(const command &cmd) {
             oss << dfTime;
             std::string seenMsg = "PRIVMSG " + targetReply + " :Last seen: " + oss.str() + " seconds ago\r\n";
             sendMessge(seenMsg);
-            // send(_fd, seenMsg.c_str(), seenMsg.size(), 0);
         }
     }
-    
 }
 
 
@@ -327,6 +290,42 @@ void Bot::handelCommand(command cmd)
     else
         return;
 }
+
+
+int Bot::connectAsync() {
+    sockaddr_in serverAddr;
+    std::memset(&serverAddr, 0, sizeof(serverAddr));
+
+    serverAddr.sin_family = AF_INET;
+    serverAddr.sin_port = htons(_sPort);
+
+    if (inet_pton(AF_INET, _sAddress.c_str(), &serverAddr.sin_addr) <= 0)
+    {
+        std::cerr << "Invalid address" << std::endl;
+        return false;
+    }
+
+    int ret = connect(_fd, reinterpret_cast<sockaddr *>(&serverAddr), sizeof(serverAddr));
+
+    if (ret == 0)
+    {
+        _state = REGISTERING;
+        return true;
+    }
+
+    if ( ret < 0 && errno != EINPROGRESS)
+    {
+        perror("connect failed: ");
+        return false;
+    }
+
+    _state = CONNECTING;
+
+    return true;
+}
+
+
+
 
 
 
