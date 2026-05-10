@@ -43,6 +43,7 @@ class Bot{
         std::string _nickname;
         std::string _username;
         std::string _realname;
+        std::string _password;
         std::string _recvBuffer;
         std::string _sendBuffer;
         std::map<std::string, std::time_t> _seenMap;
@@ -64,7 +65,7 @@ class Bot{
         int             getServerPort();
         std::string	    getServerAdr();
 
-        int init(std::string nickName, std::string userName, std::string realName);
+        int init(std::string &nickName, std::string &userName, std::string &realName, std::string &password);
 
         int connectToServer(std::string password);
         void run();

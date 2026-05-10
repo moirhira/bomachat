@@ -23,7 +23,7 @@ int main(int ac, char **av)
     std::string user = "botUser";
     std::string real = "boma";
 
-    if (!bot.init(nick, user, real))
+    if (!bot.init(nick, user, real, password))
         return 1;
 
     if (!bot.connectToServer(password))

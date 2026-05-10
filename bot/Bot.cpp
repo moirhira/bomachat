@@ -20,10 +20,11 @@ std::string  Bot::getServerAdr() {
 
 
 
-int Bot::init(std::string nickName, std::string userName, std::string realName) {
+int Bot::init(std::string& nickName, std::string& userName, std::string& realName, std::string& password) {
     _nickname = nickName;
     _username = userName;
     _realname = realName;
+    _password = password;
 
     int _sockfd = socket(AF_INET, SOCK_STREAM, 0);
     if (_sockfd < 0)
@@ -381,9 +382,27 @@ void Bot::run() {
             break;
         }
 
-        
+
         if (pfd.revents & POLLOUT)
         {
+            if (_state == CONNECTING)
+            {
+                int soError = 0;
+                socklen_t len = sizeof(sockaddr);
+
+                getsockopt(_fd, SOL_SOCKET, SO_ERROR, &soError, &len);
+
+                if (soError != 0)
+                {
+                    std::cerr << "Connect failed" << std::endl;
+                    break;
+                }
+
+                sendMessge("PASS " + password + "\r\n");
+                sendMessge("NICK " + _nickname + "\r\n");
+                sendMessge("USER " + _username + " 0 * :" + _realname + "\r\n");
+
+            }
             if (!flushSendBuffer(pfd))
                 break;
         }
