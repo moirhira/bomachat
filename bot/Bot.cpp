@@ -1,8 +1,9 @@
 #include "Bot.hpp"
 #include <cstring>
+#include <fcntl.h>
 
 
-Bot::Bot(int port, std::string address) : _fd(-1),_sPort(port), _sAddress(address) {}
+Bot::Bot(int port, std::string address) : _fd(-1),_sPort(port), _sAddress(address), _state(CONNECTING) {}
 
 Bot::~Bot() {
     if (_fd >= 0)
@@ -10,30 +11,27 @@ Bot::~Bot() {
 }
 
 
-int Bot::getServerPort() {
-    return _sPort;
-}
 
-std::string  Bot::getServerAdr() {
-    return _sAddress;
-}
-
-
-
-int Bot::init(std::string& nickName, std::string& userName, std::string& realName, std::string& password) {
+bool Bot::init(std::string& nickName, std::string& userName, std::string& realName, std::string& password) {
     _nickname = nickName;
     _username = userName;
     _realname = realName;
     _password = password;
 
-    int _sockfd = socket(AF_INET, SOCK_STREAM, 0);
-    if (_sockfd < 0)
+    _fd = socket(AF_INET, SOCK_STREAM, 0);
+    if (_fd < 0)
     {
         perror("socket fail: ");
         return 0;
     }
-    _fd = _sockfd;
-    return 1;
+    if (fcntl(_fd, F_SETFL, O_NONBLOCK) < 0)
+    {
+        perror("fcntl");
+        close(_fd);
+        _fd = -1;
+        return false;
+    }
+    return true;
 }
 
 
