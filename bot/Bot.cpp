@@ -57,6 +57,74 @@ bool Bot::flushSendBuffer() {
 }
 
 
+bool Bot::handleRecv() {
+    char buffer[512];
+
+    while (true)
+    {
+        ssize_t byts = recv(_fd, buffer, sizeof(buffer) - 1, 0);
+        if (byts < 0)
+        {
+            if (errno == EWOULDBLOCK || errno == EAGAIN)
+                break;
+            perror("recv failed: ");
+            return false;
+        }
+        if (byts == 0)
+        {
+            std::cout << "Server disconnected" << std::endl;
+            return false;
+        }
+
+        _recvBuffer.append(buffer, static_cast<size_t>(byts));
+        if (_recvBuffer.size() > 4096)
+        {
+            std::cout << "Receive buffer overflow — clearing." << std::endl;
+            _recvBuffer.clear();
+            return true;
+        }
+    }
+
+        
+    size_t pos;
+    while ((pos = _recvBuffer.find("\r\n")) != std::string::npos)
+    {
+        std::string line = _recvBuffer.substr(0, pos);
+        _recvBuffer.erase(0, pos + 2);
+        handleLine(line);
+    }
+    return true;
+}
+
+
+void Bot::handleLine(const std::string& line)
+{
+    if (_state == REGISTERING)
+    {
+        if (line.find(" 001 ") != std::string::npos)
+        {
+            std::cout << "Registred succesfully" << std::endl;
+            sendMessge("JOIN #general\r\n");
+            _state = RUNNING;
+        }
+        else if (line.find(" 433 ") != std::string::npos)
+        {
+            _nickname += "_";
+            sendMessge("NICK " + _nickname + "\r\n");
+        }
+        else if (line.size() >= 4 && line.substr(0, 4) == "PING")
+        {
+            std::string token = (line.size() > 5) ? line.substr(5) : "";
+            sendMessge("PONG :" + token + "\r\n");
+        }
+    }
+    else if (_state == RUNNING)
+    {
+        command cmd = parseCommand(line);
+        handelCommand(cmd);
+    }
+}
+
 
 
 int Bot::connectAsync() {
@@ -261,68 +329,10 @@ void Bot::handelCommand(command cmd)
 }
 
 
-void Bot::handleLine(const std::string& line)
-{
-    if (_state == REGISTERING)
-    {
-        if (line.find(" 001 ") != std::string::npos)
-        {
-            std::cout << "Registred succesfully" << std::endl;
-            sendMessge("JOIN #general\r\n");
-            _state = RUNNING;
-        }
-        else if (line.find(" 433 ") != std::string::npos)
-        {
-            _nickname += "_";
-            sendMessge("NICK " + _nickname + "\r\n");
-        }
-    }
-
-    if (_state == RUNNING)
-    {
-        command cmd = parseCommand(line);
-        handelCommand(cmd);
-    }
-}
 
 
-bool Bot::handleRecv() {
-    char buffer[512];
-    while (true)
-    {
-        ssize_t byts = recv(_fd, buffer, sizeof(buffer) - 1, 0);
-        if (byts < 0)
-        {
-            if (errno == EWOULDBLOCK || errno == EAGAIN)
-                break;
-            perror("recv failed: ");
-            return false;
-        }
-        if (byts == 0)
-        {
-            std::cout << "Client disconnected" << std::endl;
-            return false;
-        }
 
-        _recvBuffer.append(buffer, byts);
-        if (_recvBuffer.size() > 4096)
-        {
-            std::cout << "Receive buffer overflow — clearing." << std::endl;
-            _recvBuffer.clear();
-            return true;
-        }
-    }
 
-        
-    size_t pos;
-    while ((pos = _recvBuffer.find("\r\n")) != std::string::npos)
-    {
-        std::string line = _recvBuffer.substr(0, pos);
-        _recvBuffer.erase(0, pos + 2);
-        handleLine(line);
-    }
-    return true;
-}
 
 
 void Bot::run() {
