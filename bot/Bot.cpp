@@ -167,14 +167,16 @@ void Bot::handlePrivmsg(const command &cmd) {
         if (iss >> extra)
         {
             std::string errorMsg = "PRIVMSG " + targetReply + " :This command does not take any parameters.\r\n";
-            send(_fd, errorMsg.c_str(), errorMsg.size(), 0);
+            // send(_fd, errorMsg.c_str(), errorMsg.size(), 0);
+            sendMessge(errorMsg);
             return;
         }
     }
     if (commandName == "!help")
     {
         std::string helpMsg = "PRIVMSG " + targetReply + " :" + "Available commands: !help !time !roll !seen\r\n";
-        send(_fd, helpMsg.c_str(), helpMsg.size(), 0);
+        sendMessge(helpMsg);
+        // send(_fd, helpMsg.c_str(), helpMsg.size(), 0);
     }
     if (commandName == "!time")
     {
@@ -182,7 +184,8 @@ void Bot::handlePrivmsg(const command &cmd) {
         std::string timeStr = std::ctime(&now);
         timeStr.erase(timeStr.find("\n"));
         std::string timeMsg = "PRIVMSG " + targetReply + " :Current time: " + timeStr + "\r\n";
-        send(_fd, timeMsg.c_str(), timeMsg.size(), 0);
+        // send(_fd, timeMsg.c_str(), timeMsg.size(), 0);
+        sendMessge(timeMsg);
     }
     if (commandName == "!roll")
     {
@@ -190,7 +193,8 @@ void Bot::handlePrivmsg(const command &cmd) {
         std::ostringstream oss;
         oss << roll;
         std::string rollMsg = "PRIVMSG " + targetReply + " :You rolled a " + oss.str() + "\r\n";
-        send(_fd, rollMsg.c_str(), rollMsg.size(), 0);
+        sendMessge(rollMsg)
+        // send(_fd, rollMsg.c_str(), rollMsg.size(), 0);
     }
 
     if (commandName == "!seen")
@@ -201,7 +205,8 @@ void Bot::handlePrivmsg(const command &cmd) {
         if (targetNickCheck.empty())
         {
             std::string seenMsg = "PRIVMSG " + targetReply + " :Please specify a nickname to check.\r\n";
-            send(_fd, seenMsg.c_str(), seenMsg.size(), 0);
+            sendMessge(seenMsg);
+            // send(_fd, seenMsg.c_str(), seenMsg.size(), 0);
             return;
 
         }
@@ -209,7 +214,7 @@ void Bot::handlePrivmsg(const command &cmd) {
         if(targetNickCheck == senderNick)
         {
             std::string seenMsg = "PRIVMSG " + targetReply + " :That's you!\r\n";
-            send(_fd, seenMsg.c_str(), seenMsg.size(), 0);
+            sendMessge(seenMsg);
             return;
 
         }
@@ -217,7 +222,8 @@ void Bot::handlePrivmsg(const command &cmd) {
         if (_seenMap.find(targetNickCheck) == _seenMap.end())
         {
             std::string seenMsg = "PRIVMSG " + targetReply + " :I haven't seen " + targetNickCheck + "\r\n";
-            send(_fd, seenMsg.c_str(), seenMsg.size(), 0);
+            sendMessge(seenMsg);
+            // send(_fd, seenMsg.c_str(), seenMsg.size(), 0);
 
         }
         else
@@ -228,7 +234,8 @@ void Bot::handlePrivmsg(const command &cmd) {
             std::ostringstream oss;
             oss << dfTime;
             std::string seenMsg = "PRIVMSG " + targetReply + " :Last seen: " + oss.str() + " seconds ago\r\n";
-            send(_fd, seenMsg.c_str(), seenMsg.size(), 0);
+            sendMessge(seenMsg);
+            // send(_fd, seenMsg.c_str(), seenMsg.size(), 0);
         }
     }
     
@@ -246,8 +253,9 @@ void Bot::handelCommand(command cmd)
     {
         if (cmd.params.size() >= 2 && cmd.params[1] == _nickname)
         {
-            std::string joinCmd = "JOIN" + cmd.params[0] + "\r\n";
-            send(_fd, joinCmd.c_str(), joinCmd.size(), 0);
+            std::string joinCmd = "JOIN " + cmd.params[0] + "\r\n";
+            sendMessge(joinCmd);
+            // send(_fd, joinCmd.c_str(), joinCmd.size(), 0);
         }
     }
     else

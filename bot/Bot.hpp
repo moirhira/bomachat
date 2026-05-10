@@ -51,27 +51,20 @@ class Bot{
         command parseCommand(std::string cmdLine);
         void    handelCommand(command cmd);
         void    handlePrivmsg(const command &cmd);
+        void    handleLine(const std::string& line);
 
         void sendMessge(const std::string &msg);
         bool flushSendBuffer();
         bool handleRecv();
-        void handleLine(const std::string& line);
 
 
     public:
         Bot(int port, std::string address);
         ~Bot();
 
-        int             getServerPort();
-        std::string	    getServerAdr();
-
         int init(std::string &nickName, std::string &userName, std::string &realName, std::string &password);
 
-        int connectAsync();
         void run();
-
-        
-
 };
 
 #endif
