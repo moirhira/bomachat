@@ -42,7 +42,7 @@ void Bot::sendMessge(const std::string &msg) {
 }
 
 
-bool Bot::flushSendBuffer(struct pollfd &pfd) {
+bool Bot::flushSendBuffer() {
     while (!_sendBuffer.empty())
     {
         ssize_t sent = send(_fd, _sendBuffer.c_str(), _sendBuffer.size(), 0);
@@ -58,11 +58,6 @@ bool Bot::flushSendBuffer(struct pollfd &pfd) {
     return true;
 }
 
-
-
-bool Bot::doRegistration() {
-
-}
 
 
 
@@ -83,7 +78,7 @@ int Bot::connectAsync() {
 
     if (ret == 0)
     {
-        _state == REGISTERING;
+        _state = REGISTERING;
         return true;
     }
 
@@ -93,45 +88,9 @@ int Bot::connectAsync() {
         return false;
     }
 
-    _state == CONNECTING;
+    _state = CONNECTING;
 
     return true;
-
-
-    
-
-    // char buffer[1024];
-
-    // while (true)
-    // {
-    //     size_t n = recv(_fd, buffer, sizeof(buffer) - 1, 0);
-    //     if (n <= 0)
-    //         break;
-        
-    //     buffer[n] = '\0';
-    //     std::string data(buffer);
-
-    //     if (data.find("433") != std::string::npos)
-    //     {
-    //         _nickname = _nickname + "_";
-    //         nickCmd = "NICK " + _nickname + "\r\n";
-    //         send(_fd, nickCmd.c_str(), nickCmd.size(), 0);
-    //     }
-    //     else if (data.find("001") != std::string::npos)
-    //     {
-    //         std::cout << "Registred succesfully" << std::endl;
-    //         std::string joinCmd = "JOIN #general\r\n";
-    //         send(_fd, joinCmd.c_str(), joinCmd.size(), 0);
-    //         return 1;
-    //     }
-    //     else
-    //     {
-    //         break;
-    //     }
-    // }
-    // close(_fd);
-    // std::cerr << "Failed to connect or register with the server." << std::endl;
-    // return 0;
 }
 
 
@@ -296,39 +255,65 @@ void Bot::handelCommand(command cmd)
 }
 
 
+void Bot::handleLine(const std::string& line)
+{
+    if (_state == REGISTERING)
+    {
+        if (line.find(" 001 ") != std::string::npos)
+        {
+            std::cout << "Registred succesfully" << std::endl;
+            sendMessge("JOIN #general\r\n");
+            _state = RUNNING;
+        }
+        else if (line.find(" 433 ") != std::string::npos)
+        {
+            _nickname += "_";
+            sendMessge("NICK " + _nickname + "\r\n");
+        }
+    }
 
-bool Bot::handleRecv(struct pollfd &pfd) {
+    if (_state == RUNNING)
+    {
+        command cmd = parseCommand(line);
+        handelCommand(cmd);
+    }
+}
+
+
+bool Bot::handleRecv() {
     char buffer[512];
-    int byts = recv(pfd.fd, buffer, sizeof(buffer) - 1, 0);
-    if (byts < 0)
+    while (true)
     {
-        if (errno == EWOULDBLOCK || errno == EAGAIN)
-            return;
-        perror("recv failed: ");
-        return false;
-    }
-    if (byts == 0)
-    {
-        std::cout << "client disconnected" << std::endl;
-        return false;
-    }
+        ssize_t byts = recv(_fd, buffer, sizeof(buffer) - 1, 0);
+        if (byts < 0)
+        {
+            if (errno == EWOULDBLOCK || errno == EAGAIN)
+                break;
+            perror("recv failed: ");
+            return false;
+        }
+        if (byts == 0)
+        {
+            std::cout << "Client disconnected" << std::endl;
+            return false;
+        }
 
-    _outBuffer.append(buffer, byts);
-    if (_buffer.size() > 4096)
-    {
-        std::cout << "Receive buffer overflow — clearing." << std::endl;
-        _outBuffer.clear();
-        return true;
+        _recvBuffer.append(buffer, byts);
+        if (_recvBuffer.size() > 4096)
+        {
+            std::cout << "Receive buffer overflow — clearing." << std::endl;
+            _recvBuffer.clear();
+            return true;
+        }
     }
 
         
     size_t pos;
-    while ((pos = _buffer.find("\r\n")) != std::string::npos)
+    while ((pos = _recvBuffer.find("\r\n")) != std::string::npos)
     {
-        std::string line = _buffer.substr(0, pos);
-        _buffer.erase(0, pos + 2);
-        command cmd = parseCommand(line);
-        handelCommand(cmd);
+        std::string line = _recvBuffer.substr(0, pos);
+        _recvBuffer.erase(0, pos + 2);
+        handleLine(line);
     }
     return true;
 }
@@ -384,13 +369,13 @@ void Bot::run() {
                 _state = REGISTERING;
 
             }
-            if (!flushSendBuffer(pfd))
+            if (!flushSendBuffer())
                 break;
         }
 
         if (pfd.revents & POLLIN)
         {
-            if (!handleRecv(pfd))
+            if (!handleRecv())
                 break;
         }
     }

@@ -53,9 +53,9 @@ class Bot{
         void    handlePrivmsg(const command &cmd);
 
         void sendMessge(const std::string &msg);
-        bool flushSendBuffer(struct pollfd &pfd);
-        bool handleRecv(struct pollfd &pfd);
-        bool doRegistration();
+        bool flushSendBuffer();
+        bool handleRecv();
+        void handleLine(const std::string& line);
 
 
     public:
@@ -73,4 +73,5 @@ class Bot{
         
 
 };
+
 #endif
