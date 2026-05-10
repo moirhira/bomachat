@@ -45,18 +45,6 @@ void Bot::sendMessge(const std::string &msg) {
 bool Bot::flushSendBuffer(struct pollfd &pfd) {
     while (!_sendBuffer.empty())
     {
-        pfd.events = POLLIN | POLLOUT;
-        int ret = poll(&pfd, 1, 3000);
-        if ( ret < 0)
-        {
-            perror("poll faild :");
-            return false;
-        }
-        if (ret == 0)
-            continue;
-        if (!(pfd.revents & POLLOUT))
-            break;
-
         ssize_t sent = send(_fd, _sendBuffer.c_str(), _sendBuffer.size(), 0);
         if (sent < 0)
         {
@@ -110,13 +98,7 @@ int Bot::connectAsync() {
     return true;
 
 
-    // std::string passCmd = "PASS " + password + "\r\n";
-    // send(_fd, passCmd.c_str(), passCmd.size(), 0);
-
-    // std::string nickCmd = "NICK " + _nickname + "\r\n";
-    // send(_fd, nickCmd.c_str(), nickCmd.size(), 0);
-
-    // send(_fd, "USER bot 0 * :bot\r\n", strlen("USER bot 0 * :bot\r\n"), 0);
+    
 
     // char buffer[1024];
 
