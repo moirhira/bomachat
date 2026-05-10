@@ -398,9 +398,11 @@ void Bot::run() {
                     break;
                 }
 
-                sendMessge("PASS " + password + "\r\n");
+                sendMessge("PASS " + _password + "\r\n");
                 sendMessge("NICK " + _nickname + "\r\n");
                 sendMessge("USER " + _username + " 0 * :" + _realname + "\r\n");
+
+                _state = REGISTERING;
 
             }
             if (!flushSendBuffer(pfd))
