@@ -1,8 +1,4 @@
 #include "Bot.hpp"
-#include <cstring>
-#include <fcntl.h>
-#include <csignal>
-volatile sig_atomic_t g_running = 1;
 
 
 Bot::Bot(int port, std::string address) : _fd(-1),_sPort(port), _sAddress(address), _state(CONNECTING) {}

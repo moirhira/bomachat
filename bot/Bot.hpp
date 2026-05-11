@@ -16,6 +16,12 @@
 #include <ctime>
 #include <sstream>
 #include <map>
+#include <cstring>
+#include <fcntl.h>
+#include <csignal>
+
+
+extern volatile sig_atomic_t g_running;
 
 struct command
 {

@@ -1,9 +1,15 @@
 #include "Bot.hpp"
 
+volatile sig_atomic_t g_running = 1;
 
+void sigintHandler(int signum)
+{
+    (void)signum;
+    g_running = 0;
+}
 int main(int ac, char **av)
 {
-
+    signal(SIGINT, sigintHandler);
     if (ac != 4)
     {
         std::cerr << "Error:\nUsage ./bot <address> <port> <password>" << std::endl;
