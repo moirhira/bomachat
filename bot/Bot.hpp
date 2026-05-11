@@ -67,5 +67,4 @@ class Bot{
 
         void run();
 };
-
 #endif

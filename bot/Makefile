@@ -1,5 +1,5 @@
 NAME = bot
-SRC = Bot.cpp main.cpp ../server/Client.cpp
+SRC = Bot.cpp main.cpp parsing.cpp privmsg.cpp
 OBJ = $(SRC:.cpp=.o)
 CXX = c++
 CXXFLAGS = -Wall -Wextra -Werror -std=c++98 -I../server -I../utils
