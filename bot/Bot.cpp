@@ -101,7 +101,12 @@ void Bot::handleLine(const std::string& line)
 {
     if (_state == REGISTERING)
     {
-        if (line.find(" 001 ") != std::string::npos)
+        if (line.size() >= 4 && line.substr(0, 4) == "PING")
+        {
+            std::string token = (line.size() > 5) ? line.substr(5) : "";
+            sendMessge("PONG :" + token + "\r\n");
+        }
+        else if (line.find(" 001 ") != std::string::npos)
         {
             std::cout << "Registred succesfully" << std::endl;
             sendMessge("JOIN #general\r\n");
@@ -111,11 +116,6 @@ void Bot::handleLine(const std::string& line)
         {
             _nickname += "_";
             sendMessge("NICK " + _nickname + "\r\n");
-        }
-        else if (line.size() >= 4 && line.substr(0, 4) == "PING")
-        {
-            std::string token = (line.size() > 5) ? line.substr(5) : "";
-            sendMessge("PONG :" + token + "\r\n");
         }
     }
     else if (_state == RUNNING)
@@ -289,12 +289,12 @@ void Bot::handelCommand(command cmd)
     else if (cmd.command == "PING")
     {
         std::string token = cmd.params.empty() ? "" : cmd.params[0];
-        sendMessge("PONG :" + token + "\n\r");
+        sendMessge("PONG :" + token + "\r\n");
     }
 }
 
 
-int Bot::connectAsync() {
+bool Bot::connectAsync() {
     sockaddr_in serverAddr;
     std::memset(&serverAddr, 0, sizeof(serverAddr));
 
@@ -311,6 +311,9 @@ int Bot::connectAsync() {
 
     if (ret == 0)
     {
+        sendMessge("PASS " + _password + "\r\n");
+        sendMessge("NICK " + _nickname + "\r\n");
+        sendMessge("USER " + _username + " 0 * :" + _realname + "\r\n"); 
         _state = REGISTERING;
         return true;
     }
@@ -330,44 +333,8 @@ int Bot::connectAsync() {
 
 
 
-
-
-
-
-
-
 void Bot::run() {
-    struct sockaddr_in serverAddr;
-    std::memset(&serverAddr, 0, sizeof(serverAddr));
 
-    serverAddr.sin_family = AF_INET;
-    serverAddr.sin_port = htons(_sPort);
-
-    serverAddr.sin_addr.s_addr = inet_addr(_sAddress.c_str());
-    if (serverAddr.sin_addr.s_addr == (in_addr_t)(-1))
-    {
-        std::cerr << "Invalid address" << _sAddress << std::endl;
-        return ;
-    }
-
-    int ret = connect(_fd, reinterpret_cast<sockaddr *>(&serverAddr), sizeof(serverAddr));
-
-    if ( ret < 0 && errno != EINPROGRESS)
-    {
-        perror("connect failed: ");
-        return;
-    }
-
-
-    if (ret == 0)
-    {
-        sendMessge("PASS " + _password + "\r\n");
-        sendMessge("NICK " + _nickname + "\r\n");
-        sendMessge("USER " + _username + " 0 * :" + _realname + "\r\n");
-        _state = REGISTERING;
-    }
-
-    
     struct pollfd pfd;
     pfd.fd = _fd;
 
@@ -387,7 +354,7 @@ void Bot::run() {
 
         if (ret == 0)
         {
-            if (_state == RUNNING)
+            if (_state != RUNNING)
             {
                 std::cerr << "Timed out waiting for server." << std::endl;
                 break;
@@ -407,7 +374,7 @@ void Bot::run() {
             if (_state == CONNECTING)
             {
                 int soError = 0;
-                socklen_t len = sizeof(sockaddr);
+                socklen_t len = sizeof(soError);
 
                 getsockopt(_fd, SOL_SOCKET, SO_ERROR, &soError, &len);
 
@@ -416,8 +383,9 @@ void Bot::run() {
                     std::cerr << "Connect failed" << std::endl;
                     break;
                 }
-
-                
+                sendMessge("PASS " + _password + "\r\n");
+                sendMessge("NICK " + _nickname + "\r\n");
+                sendMessge("USER " + _username + " 0 * :" + _realname + "\r\n"); 
                 _state = REGISTERING;
 
             }

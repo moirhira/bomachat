@@ -26,8 +26,12 @@ int main(int ac, char **av)
     if (!bot.init(nick, user, real, password))
         return 1;
 
-    bot.connectAsync(); 
-    
+    if (!bot.connectAsync())
+    {
+        std::cerr << "Failed to initiate connection" << std::endl;
+        return 1;
+    }
+
     bot.run();
 
     return 0;

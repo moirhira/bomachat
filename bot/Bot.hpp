@@ -62,6 +62,7 @@ class Bot{
         Bot(int port, std::string address);
         ~Bot();
 
+        bool connectAsync();
         bool init(std::string &nickName, std::string &userName, std::string &realName, std::string &password);
 
         void run();
