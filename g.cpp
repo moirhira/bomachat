@@ -14,23 +14,18 @@ Bot::~Bot()
 }
 
 // ─────────────────────────────────────────────
-// Getters
-// ─────────────────────────────────────────────
-
-int Bot::getServerPort() { return _sPort; }
-std::string Bot::getServerAddress() { return _sAddress; }
-
-// ─────────────────────────────────────────────
-// init — create socket and set O_NONBLOCK
+// init — create socket, set O_NONBLOCK, store credentials
 // ─────────────────────────────────────────────
 
 bool Bot::init(const std::string &nickName,
                const std::string &userName,
-               const std::string &realName)
+               const std::string &realName,
+               const std::string &password)
 {
     _nickname = nickName;
     _username = userName;
     _realname = realName;
+    _password = password;
 
     _fd = socket(AF_INET, SOCK_STREAM, 0);
     if (_fd < 0)
@@ -39,7 +34,6 @@ bool Bot::init(const std::string &nickName,
         return false;
     }
 
-    // Set socket non-blocking — mandatory per subject
     if (fcntl(_fd, F_SETFL, O_NONBLOCK) < 0)
     {
         perror("fcntl O_NONBLOCK");
@@ -51,7 +45,7 @@ bool Bot::init(const std::string &nickName,
 }
 
 // ─────────────────────────────────────────────
-// queueSend — append to outgoing buffer
+// queueSend — append message to outgoing buffer
 // ─────────────────────────────────────────────
 
 void Bot::queueSend(const std::string &msg)
@@ -60,32 +54,21 @@ void Bot::queueSend(const std::string &msg)
 }
 
 // ─────────────────────────────────────────────
-// flushSendBuffer — drain as much as possible via poll POLLOUT
-// Returns false on fatal error.
+// flushSendBuffer — drain outgoing buffer without blocking
+// Called only when poll() reports POLLOUT.
+// Returns false on fatal send error.
 // ─────────────────────────────────────────────
 
 bool Bot::flushSendBuffer(struct pollfd &pfd)
 {
+    (void)pfd;
     while (!_sendBuffer.empty())
     {
-        // Wait until the socket is writable
-        pfd.events = POLLIN | POLLOUT;
-        int ret = poll(&pfd, 1, 3000);
-        if (ret < 0)
-        {
-            perror("poll (flush)");
-            return false;
-        }
-        if (ret == 0)          // timeout — try again
-            continue;
-        if (!(pfd.revents & POLLOUT))
-            break;             // not writable yet, leave data in buffer
-
         ssize_t sent = send(_fd, _sendBuffer.c_str(), _sendBuffer.size(), 0);
         if (sent < 0)
         {
             if (errno == EAGAIN || errno == EWOULDBLOCK)
-                break;         // kernel buffer full — try next iteration
+                break;  // kernel buffer full — will retry when POLLOUT fires again
             perror("send");
             return false;
         }
@@ -95,146 +78,76 @@ bool Bot::flushSendBuffer(struct pollfd &pfd)
 }
 
 // ─────────────────────────────────────────────
-// connectToServer — non-blocking connect + registration
+// handleRecv — read data, split into lines, dispatch by state
+// Returns false on disconnect or fatal error.
 // ─────────────────────────────────────────────
 
-bool Bot::connectToServer(const std::string &password)
+bool Bot::handleRecv(State &state)
 {
-    struct sockaddr_in serverAddr;
-    serverAddr.sin_family      = AF_INET;
-    serverAddr.sin_port        = htons(_sPort);
-    // inet_addr is in the allowed list; inet_pton is not
-    serverAddr.sin_addr.s_addr = inet_addr(_sAddress.c_str());
-    if (serverAddr.sin_addr.s_addr == (in_addr_t)(-1))
+    char buf[512];
+    ssize_t n = recv(_fd, buf, sizeof(buf) - 1, 0);
+    if (n < 0)
     {
-        std::cerr << "Invalid address: " << _sAddress << std::endl;
+        if (errno == EAGAIN || errno == EWOULDBLOCK)
+            return true;    // no data right now — not an error
+        perror("recv");
+        return false;
+    }
+    if (n == 0)
+    {
+        std::cout << "Server disconnected." << std::endl;
         return false;
     }
 
-    // Non-blocking connect: returns immediately with EINPROGRESS
-    int ret = connect(_fd, (struct sockaddr *)&serverAddr, sizeof(serverAddr));
-    if (ret < 0 && errno != EINPROGRESS)
+    _recvBuffer.append(buf, static_cast<size_t>(n));
+
+    // Safety valve — drop buffer if it grows without a valid line
+    if (_recvBuffer.size() > 4096)
     {
-        perror("connect");
-        return false;
+        std::cerr << "Receive buffer overflow — clearing." << std::endl;
+        _recvBuffer.clear();
+        return true;
     }
 
-    // Wait for the connection to complete via POLLOUT
-    struct pollfd pfd;
-    pfd.fd     = _fd;
-    pfd.events = POLLOUT;
-
-    int pollRet = poll(&pfd, 1, 10000); // 10 s timeout
-    if (pollRet <= 0)
+    size_t pos;
+    while ((pos = _recvBuffer.find("\r\n")) != std::string::npos)
     {
-        std::cerr << "Connection timed out or poll error." << std::endl;
-        return false;
+        std::string line = _recvBuffer.substr(0, pos);
+        _recvBuffer.erase(0, pos + 2);
+
+        if (state == REGISTERING)
+        {
+            // 001 — welcome, registration complete
+            if (line.find(" 001 ") != std::string::npos)
+            {
+                std::cout << "Registered successfully as " << _nickname << std::endl;
+                queueSend("JOIN #general\r\n");
+                state = RUNNING;
+            }
+            // 433 — nickname already in use
+            else if (line.find(" 433 ") != std::string::npos)
+            {
+                _nickname += "_";
+                queueSend("NICK " + _nickname + "\r\n");
+            }
+            // PING during registration (some servers send it early)
+            else if (line.size() >= 4 && line.substr(0, 4) == "PING")
+            {
+                std::string token = (line.size() > 6) ? line.substr(5) : "";
+                queueSend("PONG :" + token + "\r\n");
+            }
+        }
+        else if (state == RUNNING)
+        {
+            Command cmd = parseCommand(line);
+            handleCommand(cmd);
+        }
     }
-
-    // Check SO_ERROR to confirm the connection succeeded
-    int soErr = 0;
-    socklen_t len = sizeof(soErr);
-    if (getsockopt(_fd, SOL_SOCKET, SO_ERROR, &soErr, &len) < 0 || soErr != 0)
-    {
-        std::cerr << "connect SO_ERROR: " << strerror(soErr) << std::endl;
-        return false;
-    }
-
-    // Queue registration commands — they will be flushed through poll
-    queueSend("PASS " + password + "\r\n");
-    queueSend("NICK " + _nickname + "\r\n");
-    queueSend("USER " + _username + " 0 * :" + _realname + "\r\n");
-
-    if (!flushSendBuffer(pfd))
-        return false;
-
-    // Now drive the registration reply loop through poll
-    return doRegistration();
+    return true;
 }
 
 // ─────────────────────────────────────────────
-// doRegistration — read server replies until 001 (welcome)
-// All I/O goes through poll, socket stays non-blocking throughout.
-// ─────────────────────────────────────────────
-
-bool Bot::doRegistration()
-{
-    struct pollfd pfd;
-    pfd.fd     = _fd;
-    pfd.events = POLLIN;
-
-    while (true)
-    {
-        int ret = poll(&pfd, 1, 10000);
-        if (ret < 0)
-        {
-            perror("poll (registration)");
-            return false;
-        }
-        if (ret == 0)
-        {
-            std::cerr << "Registration timed out." << std::endl;
-            return false;
-        }
-
-        if (pfd.revents & POLLIN)
-        {
-            char buf[512];
-            ssize_t n = recv(_fd, buf, sizeof(buf) - 1, 0);
-            if (n < 0)
-            {
-                if (errno == EAGAIN || errno == EWOULDBLOCK)
-                    continue;
-                perror("recv (registration)");
-                return false;
-            }
-            if (n == 0)
-            {
-                std::cerr << "Server closed connection during registration." << std::endl;
-                return false;
-            }
-
-            _recvBuffer.append(buf, static_cast<size_t>(n));
-
-            // Process all complete lines
-            size_t pos;
-            while ((pos = _recvBuffer.find("\r\n")) != std::string::npos)
-            {
-                std::string line = _recvBuffer.substr(0, pos);
-                _recvBuffer.erase(0, pos + 2);
-
-                // Numeric 433 — nick already in use
-                if (line.find(" 433 ") != std::string::npos)
-                {
-                    _nickname += "_";
-                    queueSend("NICK " + _nickname + "\r\n");
-                    if (!flushSendBuffer(pfd))
-                        return false;
-                }
-                // Numeric 001 — welcome, registration complete
-                else if (line.find(" 001 ") != std::string::npos)
-                {
-                    std::cout << "Registered successfully as " << _nickname << std::endl;
-                    queueSend("JOIN #general\r\n");
-                    if (!flushSendBuffer(pfd))
-                        return false;
-                    return true;
-                }
-                // PING during registration (servers sometimes send it)
-                else if (line.substr(0, 4) == "PING")
-                {
-                    std::string token = line.substr(5);
-                    queueSend("PONG :" + token + "\r\n");
-                    if (!flushSendBuffer(pfd))
-                        return false;
-                }
-            }
-        }
-    }
-}
-
-// ─────────────────────────────────────────────
-// parseCommand
+// parseCommand — parse a single IRC line
 // ─────────────────────────────────────────────
 
 Command Bot::parseCommand(const std::string &cmdLine)
@@ -292,12 +205,11 @@ Command Bot::parseCommand(const std::string &cmdLine)
 }
 
 // ─────────────────────────────────────────────
-// handlePrivmsg
+// handlePrivmsg — respond to bot commands
 // ─────────────────────────────────────────────
 
 void Bot::handlePrivmsg(const Command &cmd)
 {
-    // Need at least: target + message
     if (cmd.params.size() < 2)
         return;
 
@@ -308,7 +220,6 @@ void Bot::handlePrivmsg(const Command &cmd)
     _seenMap[senderNick] = std::time(NULL);
 
     const std::string &target = cmd.params[0];
-    // Reply to channel if PRIVMSG was sent to a channel, else reply privately
     std::string replyTarget = (!target.empty() && target[0] == '#') ? target : senderNick;
 
     std::istringstream iss(cmd.params[1]);
@@ -336,7 +247,6 @@ void Bot::handlePrivmsg(const Command &cmd)
     {
         std::time_t now = std::time(NULL);
         std::string timeStr = std::ctime(&now);
-        // ctime appends '\n', remove it
         if (!timeStr.empty() && timeStr[timeStr.size() - 1] == '\n')
             timeStr.erase(timeStr.size() - 1);
         queueSend("PRIVMSG " + replyTarget + " :Current time: " + timeStr + "\r\n");
@@ -355,8 +265,7 @@ void Bot::handlePrivmsg(const Command &cmd)
 
         if (targetNick.empty())
         {
-            queueSend("PRIVMSG " + replyTarget +
-                      " :Usage: !seen <nickname>\r\n");
+            queueSend("PRIVMSG " + replyTarget + " :Usage: !seen <nickname>\r\n");
             return;
         }
         if (targetNick == senderNick)
@@ -382,7 +291,7 @@ void Bot::handlePrivmsg(const Command &cmd)
 }
 
 // ─────────────────────────────────────────────
-// handleCommand — dispatch
+// handleCommand — dispatch parsed command
 // ─────────────────────────────────────────────
 
 void Bot::handleCommand(const Command &cmd)
@@ -396,99 +305,111 @@ void Bot::handleCommand(const Command &cmd)
     {
         // params[0] = channel, params[1] = kicked nick
         if (cmd.params.size() >= 2 && cmd.params[1] == _nickname)
-        {
-            // Fix: there was a missing space → "JOIN#general"
             queueSend("JOIN " + cmd.params[0] + "\r\n");
-        }
     }
     else if (cmd.name == "PING")
     {
-        // Respond to server PING to avoid timeout
         std::string token = cmd.params.empty() ? "" : cmd.params[0];
         queueSend("PONG :" + token + "\r\n");
     }
 }
 
 // ─────────────────────────────────────────────
-// handleRecv — read incoming data into _recvBuffer
-// Returns false on fatal error / disconnect.
-// ─────────────────────────────────────────────
-
-bool Bot::handleRecv(struct pollfd &pfd)
-{
-    char buf[512];
-    ssize_t n = recv(pfd.fd, buf, sizeof(buf) - 1, 0);
-    if (n < 0)
-    {
-        if (errno == EAGAIN || errno == EWOULDBLOCK)
-            return true;       // no data right now — not an error
-        perror("recv");
-        return false;
-    }
-    if (n == 0)
-    {
-        std::cout << "Server disconnected." << std::endl;
-        return false;
-    }
-
-    _recvBuffer.append(buf, static_cast<size_t>(n));
-
-    // Guard against a runaway buffer (no valid IRC line in 4 KB → drop)
-    if (_recvBuffer.size() > 4096)
-    {
-        std::cerr << "Receive buffer overflow — clearing." << std::endl;
-        _recvBuffer.clear();
-        return true;
-    }
-
-    // Dispatch every complete line
-    size_t pos;
-    while ((pos = _recvBuffer.find("\r\n")) != std::string::npos)
-    {
-        std::string line = _recvBuffer.substr(0, pos);
-        _recvBuffer.erase(0, pos + 2);
-        Command cmd = parseCommand(line);
-        handleCommand(cmd);
-    }
-
-    return true;
-}
-
-// ─────────────────────────────────────────────
-// run — main event loop, single poll(), fully non-blocking
+// run — THE single event loop
+//
+//  CONNECTING  → wait for non-blocking connect to complete (POLLOUT)
+//  REGISTERING → send PASS/NICK/USER, read 001/433 replies
+//  RUNNING     → normal bot operation
+//
+// One poll() call drives everything.
 // ─────────────────────────────────────────────
 
 void Bot::run()
 {
+    // Kick off non-blocking connect
+    struct sockaddr_in serverAddr;
+    serverAddr.sin_family      = AF_INET;
+    serverAddr.sin_port        = htons(_sPort);
+    serverAddr.sin_addr.s_addr = inet_addr(_sAddress.c_str());
+    if (serverAddr.sin_addr.s_addr == (in_addr_t)(-1))
+    {
+        std::cerr << "Invalid address: " << _sAddress << std::endl;
+        return;
+    }
+
+    int ret = connect(_fd, (struct sockaddr *)&serverAddr, sizeof(serverAddr));
+    if (ret < 0 && errno != EINPROGRESS)
+    {
+        perror("connect");
+        return;
+    }
+
+    State state = (ret == 0) ? REGISTERING : CONNECTING;
+
+    // If connect completed instantly (loopback), queue registration right away
+    if (state == REGISTERING)
+    {
+        queueSend("PASS " + _password + "\r\n");
+        queueSend("NICK " + _nickname + "\r\n");
+        queueSend("USER " + _username + " 0 * :" + _realname + "\r\n");
+    }
+
     struct pollfd pfd;
-    pfd.fd     = _fd;
-    pfd.events = POLLIN;
+    pfd.fd = _fd;
 
     while (true)
     {
-        // Ask for POLLOUT only when we have pending data to send
+        // Always listen for incoming data; also POLLOUT when we have data to send
+        // or are still waiting for connect to complete
         pfd.events = POLLIN;
-        if (!_sendBuffer.empty())
+        if (!_sendBuffer.empty() || state == CONNECTING)
             pfd.events |= POLLOUT;
 
-        int ret = poll(&pfd, 1, 500);
-        if (ret < 0)
+        int pollRet = poll(&pfd, 1, 10000);
+        if (pollRet < 0)
         {
             perror("poll");
             break;
         }
+        if (pollRet == 0)
+        {
+            // Timeout — only fatal during connection/registration
+            if (state != RUNNING)
+            {
+                std::cerr << "Timed out waiting for server." << std::endl;
+                break;
+            }
+            continue;
+        }
 
-        // Write path — flush whatever is queued
+        // ── WRITE / CONNECT PATH ─────────────────────
         if (pfd.revents & POLLOUT)
         {
+            if (state == CONNECTING)
+            {
+                // Check whether the non-blocking connect succeeded
+                int soErr = 0;
+                socklen_t len = sizeof(soErr);
+                if (getsockopt(_fd, SOL_SOCKET, SO_ERROR, &soErr, &len) < 0 || soErr != 0)
+                {
+                    std::cerr << "connect failed: " << strerror(soErr) << std::endl;
+                    break;
+                }
+                // Connected — queue registration commands and advance state
+                queueSend("PASS " + _password + "\r\n");
+                queueSend("NICK " + _nickname + "\r\n");
+                queueSend("USER " + _username + " 0 * :" + _realname + "\r\n");
+                state = REGISTERING;
+            }
+
             if (!flushSendBuffer(pfd))
                 break;
         }
 
-        // Read path
+        // ── READ PATH ────────────────────────────────
         if (pfd.revents & POLLIN)
         {
-            if (!handleRecv(pfd))
+            if (!handleRecv(state))
                 break;
         }
     }

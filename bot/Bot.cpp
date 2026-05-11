@@ -284,11 +284,13 @@ void Bot::handelCommand(command cmd)
         {
             std::string joinCmd = "JOIN " + cmd.params[0] + "\r\n";
             sendMessge(joinCmd);
-            // send(_fd, joinCmd.c_str(), joinCmd.size(), 0);
         }
     }
-    else
-        return;
+    else if (cmd.command == "PING")
+    {
+        std::string token = cmd.params.empty() ? "" : cmd.params[0];
+        sendMessge("PONG :" + token + "\n\r");
+    }
 }
 
 
@@ -335,6 +337,37 @@ int Bot::connectAsync() {
 
 
 void Bot::run() {
+    struct sockaddr_in serverAddr;
+    std::memset(&serverAddr, 0, sizeof(serverAddr));
+
+    serverAddr.sin_family = AF_INET;
+    serverAddr.sin_port = htons(_sPort);
+
+    serverAddr.sin_addr.s_addr = inet_addr(_sAddress.c_str());
+    if (serverAddr.sin_addr.s_addr == (in_addr_t)(-1))
+    {
+        std::cerr << "Invalid address" << _sAddress << std::endl;
+        return ;
+    }
+
+    int ret = connect(_fd, reinterpret_cast<sockaddr *>(&serverAddr), sizeof(serverAddr));
+
+    if ( ret < 0 && errno != EINPROGRESS)
+    {
+        perror("connect failed: ");
+        return;
+    }
+
+
+    if (ret == 0)
+    {
+        sendMessge("PASS " + _password + "\r\n");
+        sendMessge("NICK " + _nickname + "\r\n");
+        sendMessge("USER " + _username + " 0 * :" + _realname + "\r\n");
+        _state = REGISTERING;
+    }
+
+    
     struct pollfd pfd;
     pfd.fd = _fd;
 
@@ -353,7 +386,14 @@ void Bot::run() {
         }
 
         if (ret == 0)
+        {
+            if (_state == RUNNING)
+            {
+                std::cerr << "Timed out waiting for server." << std::endl;
+                break;
+            }
             continue;
+        }
 
         if (pfd.revents & (POLLERR | POLLHUP | POLLNVAL))
         {
@@ -377,10 +417,7 @@ void Bot::run() {
                     break;
                 }
 
-                sendMessge("PASS " + _password + "\r\n");
-                sendMessge("NICK " + _nickname + "\r\n");
-                sendMessge("USER " + _username + " 0 * :" + _realname + "\r\n");
-
+                
                 _state = REGISTERING;
 
             }
