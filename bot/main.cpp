@@ -3,6 +3,7 @@
 
 int main(int ac, char **av)
 {
+
     if (ac != 4)
     {
         std::cerr << "Error:\nUsage ./bot <address> <port> <password>" << std::endl;
