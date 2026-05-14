@@ -33,7 +33,7 @@ void handlePrivmsg(Client *client, std::vector<std::string> params,
         if (!channel->isMember(client))
             return sendReply(client, "442", "You're not on that channel", target);
 
-        std::vector<Client *> members = channel->getMembers();
+        const std::vector<Client *> &members = channel->getMembers();
         for (size_t i = 0; i < members.size(); i++)
         {
             if (members[i]->getFd() != client->getFd())

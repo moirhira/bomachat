@@ -37,8 +37,8 @@ void handleTopic(Client *client, std::vector<std::string> params, std::vector<Ch
             }
             channels[i].setTopic(params[1]);
             std::string topicMsg = ":" + client->getNickname() + "!" + client->getUsername() + "@localhost TOPIC " + params[0] + " :" + params[1] + "\r\n";
-            std::vector<Client *> members = channels[i].getMembers();
-            for (size_t j = 0; j < channels[i].getMembers().size(); j++)
+            const std::vector<Client *> &members = channels[i].getMembers();
+            for (size_t j = 0; j < members.size(); j++)
             {
                 members[j]->sendMessage(topicMsg);
             }

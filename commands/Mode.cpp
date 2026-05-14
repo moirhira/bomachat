@@ -115,7 +115,7 @@ void handleMode(Client *client, std::vector<std::string> params, std::vector<Cha
                     }
                     const std::string &targetNick = params[nextArgId++];
                     Client *targetClient = NULL;
-                    std::vector<Client *> members = channels[i].getMembers();
+                    const std::vector<Client *> &members = channels[i].getMembers();
                     for (size_t j = 0; j < members.size(); j++)
                     {
                         if (members[j]->getNickname() == targetNick)
@@ -226,7 +226,7 @@ void handleMode(Client *client, std::vector<std::string> params, std::vector<Cha
     {
         std::string msg = ":" + client->getNickname() + "!" + client->getUsername()
                         + "@localhost MODE " + target + " " + modeStr + modeArgs + "\r\n";
-        std::vector<Client *> members = channels[i].getMembers();
+        const std::vector<Client *> &members = channels[i].getMembers();
         for (size_t j = 0; j < members.size(); j++)
             members[j]->sendMessage(msg);
     }

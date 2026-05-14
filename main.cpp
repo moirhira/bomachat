@@ -36,10 +36,18 @@ int main(int ac, char **av)
 		std::cerr << "Input format : ./ircserv <port> <password>" << std::endl;
 		return 1;
 	}
-	std::string s(av[1]), pass(av[2]);
+	std::string s(av[1]);
 	int port = validate_input(s);
 	if (!port)
 		return 1;
+
+	std::string pass(av[2]);
+	if (pass.empty())
+	{
+		std::cerr << "Password cannot be epmty!" << std::endl;
+		return 1;
+	}
+	
 	
 	try
 	{

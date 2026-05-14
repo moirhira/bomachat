@@ -13,8 +13,8 @@ void sendReply(Client *client, std::string errorCode, std::string errorMsg, std:
 void sendWelcome(Client *client);
 bool isPreRegistrationCommand(const std::string &cmd);
 void handlePass(Client *client, std::vector<std::string> params, std::string password);
-void handleNick(Client *client, std::vector<std::string> params, std::vector<Client *> &clients, std::vector<Channel> &channels);
-void handleUser(Client *client, const std::vector<std::string> params);
+void handleNick(Client *client, std::vector<std::string>& params, std::vector<Client *> &clients, std::vector<Channel> &channels);
+void handleUser(Client *client, const std::vector<std::string>& params);
 void handleJoin(Client *client, std::vector<std::string> params, std::vector<Channel> &channels);
 void handlePrivmsg(Client *client, std::vector<std::string> params, std::vector<Client *> &clients, std::vector<Channel> &channels);
 void handleTopic(Client *client, std::vector<std::string> params, std::vector<Channel> &channels);

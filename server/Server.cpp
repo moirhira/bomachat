@@ -11,8 +11,7 @@ void Server::parse_cmd(Client *client, int i, int curFd)
 	{
 		std::string line = cmdLine.substr(0, pos);
 		cmdLine.erase(0, pos + 2);
-		if (!line.empty() && line[line.size() - 1] == '\r')
-			line.erase(line.size() - 1);
+
 		command cmd = parseCommand(line);
 		handelCommand(cmd, client, i);
 		if (!getClientById(curFd))
@@ -20,33 +19,7 @@ void Server::parse_cmd(Client *client, int i, int curFd)
 	}
 }
 
-void Server::Receive_input(int i)
-{
-	char buffer[1024] = {0};
-	ssize_t n = recv(this->pfds[i].fd, buffer, sizeof(buffer) - 1, 0);
-    if (n == 0)
-		removeClient(this->pfds[i].fd);
-	else if (n < 0)
-	{
-		if (errno != EAGAIN && errno != EWOULDBLOCK)
-			removeClient(this->pfds[i].fd);
-	}
-	else
-	{
-		Client *tmp = getClientById(pfds[i].fd);
-		if (tmp)
-		{
-			tmp->appendToBuffer(std::string(buffer, n));
-			if (tmp->getBuffer().size() > 512)
-			{
-            	disconnectClient(i);
-            	std::cout << "client disconnected (buffer overflow)" << std::endl;
-            	return;
-        	}
-			parse_cmd(tmp, i, pfds[i].fd);
-		}
-	}
-}
+
 
 
 void Server::Respond_to_client(int i)
@@ -56,10 +29,14 @@ void Server::Respond_to_client(int i)
 		return;
 	std::string &buffer = client->getOutBuffer();
 	if (buffer.empty())
-		return;
+	{
+        return;
+    }
 	ssize_t n = send(client->getFd(), buffer.c_str(), buffer.length(), 0);
 	if (n > 0)
+	{
 		buffer.erase(0, static_cast<size_t>(n));
+	}
 	else if (n < 0)
 	{
 		if (errno == EWOULDBLOCK || errno == EAGAIN)
@@ -74,6 +51,30 @@ void signalhandler(int sig)
 	running = 0;
 }
 
+void Server::handle_events()
+{
+	int size = this->pfds.size();
+	for (int i = size - 1; i >= 0; i--)
+	{
+		short revents = this->pfds[i].revents;
+		int fd = this->pfds[i].fd;
+		if (revents & (POLLHUP | POLLERR | POLLNVAL))
+		{
+			if (fd == this->_sockfd)
+				throw std::runtime_error("Server socket error");
+			disconnectClient(i);
+		}
+		else if (revents & POLLIN)
+		{
+			if (fd == this->_sockfd)
+				Accept_client();
+			else
+				Receive_input(i);
+		}
+		else if (revents & POLLOUT)
+			Respond_to_client(i);
+	}
+}
 void Server::run()
 {
 	struct pollfd server_pfd;
@@ -85,6 +86,12 @@ void Server::run()
 	signal(SIGQUIT, signalhandler);
 	while (running)
 	{
+		for (size_t i = 1; i < this->pfds.size(); i++)
+		{
+			Client *client = getClientById(this->pfds[i].fd);
+			if (client)
+				this->pfds[i].events = client->getClientEvents();
+		}
 		ret = poll(&(this->pfds[0]), this->pfds.size(), 3000);
 		if (ret < 0)
 		{
@@ -93,22 +100,7 @@ void Server::run()
 			throw std::runtime_error("Problem in Poll!");
 		}
 		else if (ret > 0)
-		{
-			for (int i = this->pfds.size() - 1; i >= 0; i--)
-			{
-				if (this->pfds[i].revents & POLLIN)
-				{
-					if (this->pfds[i].fd == this->_sockfd)
-						Accept_client();
-					else
-						Receive_input(i);
-				}
-				else if (this->pfds[i].revents & POLLOUT)
-					Respond_to_client(i);
-				else if (this->pfds[i].revents & (POLLHUP | POLLERR | POLLNVAL))
-					removeClient(this->pfds[i].fd);
-			}
-		}
+			handle_events();
 	}
 }
 

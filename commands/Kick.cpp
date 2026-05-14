@@ -24,7 +24,7 @@ void handleKick(Client *client, std::vector<std::string> params, std::vector<Cha
             {
                 if (channel.isOperator(client))
                 {
-                    std::vector<Client *> members = channel.getMembers();
+                    const std::vector<Client *> &members = channel.getMembers();
                     for (size_t m = 0; m < members.size(); m++)
                     {
                         if (members[m]->getNickname() == targetUser)

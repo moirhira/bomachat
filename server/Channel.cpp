@@ -24,13 +24,13 @@ std::string Channel::getPass() const {
     return _pass;
 }
 
-std::vector<Client*> Channel::getMembers() const {
+const std::vector<Client*> &Channel::getMembers() const {
     return _members;
 }
 
- std::vector<Client*> Channel::getOperators() const {
+const std::vector<Client*> &Channel::getOperators() const {
     return _operators;
- }
+}
 
 void Channel::setPass(std::string pass) {
     _pass = pass;

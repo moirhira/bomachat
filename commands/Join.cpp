@@ -22,7 +22,7 @@ static void sendJoinReply(Client *client, Channel &channel)
     }
 
     std::string namesList = ":server 353 " + nick + " = " + channnelName + " :";
-    std::vector<Client *> members = channel.getMembers();
+    const std::vector<Client *> &members = channel.getMembers();
     for (size_t i = 0; i < members.size(); i++)
     {
         if (channel.isOperator(members[i]))

@@ -2,7 +2,7 @@
 #include "Server.hpp"
 
 
-void handleUser(Client *client, const std::vector<std::string> params)
+void handleUser(Client *client, const std::vector<std::string>& params)
 {
     if (!client->isAuth())
     {
@@ -11,7 +11,7 @@ void handleUser(Client *client, const std::vector<std::string> params)
     }
     if (client->isReg())
     {
-        sendReply(client, "462", "You are already registred!", "USER");
+        sendReply(client, "462", "You may not reregister", "USER");
         return;
     }
     if (params.size() < 4)
@@ -21,10 +21,9 @@ void handleUser(Client *client, const std::vector<std::string> params)
     }
     client->setUsername(params[0]);
     client->setRealname(params[3]);
-    if (!client->getNickname().empty())
+    if (!client->getNickname().empty() && !client->isReg())
     {
         client->setRegistered(true);
-    }
-    if (client->isReg())
         sendWelcome(client);
+    }
 }
