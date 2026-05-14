@@ -1,7 +1,6 @@
 #include "ServerCommands.hpp"
 #include "Server.hpp"
 #include <cctype>
-#include <set>
 
 static bool isValidNickChar(char c)
 {
@@ -13,8 +12,6 @@ static bool isValidNickChar(char c)
 
 static bool isValidNick(const std::string &nick)
 {
-    if (nick.empty())
-        return false;
     if (nick.size() > 9 || isdigit(nick[0]) || nick[0] == '-')
         return false;
     for (size_t i = 0; i < nick.size(); i++)
@@ -35,7 +32,7 @@ Client *findClientByNick(std::vector<Client *> &clients, const std::string &nick
     return NULL;
 }
 
-void handleNick(Client *client, std::vector<std::string>& params,
+void handleNick(Client *client, std::vector<std::string> params,
                 std::vector<Client *> &clients, std::vector<Channel> &channels)
 {
     if (!client->isAuth())
@@ -47,7 +44,6 @@ void handleNick(Client *client, std::vector<std::string>& params,
 
     if (!isValidNick(newNick))
         return sendReply(client, "432", "Erroneous nickname", newNick);
-
     if (findClientByNick(clients, newNick, client))
         return sendReply(client, "433", "Nickname is already in use", newNick);
 
@@ -65,23 +61,9 @@ void handleNick(Client *client, std::vector<std::string>& params,
     else if (wasReg)
     {
         std::string nickMsg = ":" + oldNick + "!" + client->getUsername()
-            + "@localhost NICK :" + newNick + "\r\n";
-
+                            + "@localhost NICK :" + newNick + "\r\n";
         client->sendMessage(nickMsg);
-        std::set<Client*> notified;
         for (size_t i = 0; i < channels.size(); i++)
-        {
-            if (!channels[i].isMember(client))
-                continue;
-            std::vector<Client*> members = channels[i].getMembers();
-            for (size_t j = 0; j < members.size(); j++)
-            {
-                if (members[j] != client && notified.find(members[j]) == notified.end())
-                {
-                    members[j]->sendMessage(nickMsg);
-                    notified.insert(members[j]);
-                }
-            }
-        }
+            channels[i].brodcastMessage(nickMsg, client);
     }
 }

@@ -43,9 +43,9 @@ class Server
 		void run();
 		void Accept_client();
 		void Respond_to_client(int i);
+		void removeClient(int fd);
 		void Receive_input(int i);
 		void disconnectClient(int i);
-		void handle_events();
 
         Client* getClientById(int id);
         command parseCommand(std::string cmdLine);

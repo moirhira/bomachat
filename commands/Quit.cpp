@@ -16,4 +16,5 @@ void handleQuit(Client *client, std::vector<std::string> params, std::vector<Cha
         channels[j].removeClientEverywhere(client);
     }
     server->disconnectClient(i);
+    std::cout << "client disconnected" << std::endl;
 }

@@ -36,7 +36,7 @@ void Server::Accept_client()
 	_clients.push_back(tmp);
 	struct pollfd client_pfd;
 	client_pfd.fd = client_fd;
-    client_pfd.events = POLLIN;
+	client_pfd.events = POLLIN | POLLOUT;
 	client_pfd.revents = 0;
 	this->pfds.push_back(client_pfd);
 	std::cout << "New Client Accepted" << std::endl;
@@ -44,31 +44,27 @@ void Server::Accept_client()
 }
 
 
-void Server::Receive_input(int i)
+void Server::removeClient(int fd)
 {
-	char buffer[1024] = {0};
-	ssize_t n = recv(this->pfds[i].fd, buffer, sizeof(buffer) - 1, 0);
-    if (n == 0)
-		return disconnectClient(i);
-	if (n < 0)
-	{
-		if (errno != EAGAIN && errno != EWOULDBLOCK)
-			return disconnectClient(i);
-	}
-	else
-	{
-		Client *tmp = getClientById(pfds[i].fd);
-		if (tmp)
-		{
-			tmp->appendToBuffer(std::string(buffer, n));
-			if (tmp->getBuffer().size() > 512)
-			{
-            	std::cout << "client disconnected (buffer overflow)" << std::endl;
-            	return disconnectClient(i);
-        	}
-			parse_cmd(tmp, i, pfds[i].fd);
-		}
-	}
+    close(fd);
+    for (std::vector<Client*>::iterator it = _clients.begin(); it != _clients.end(); )
+    {
+        if ((*it)->getFd() == fd)
+        {
+            delete *it;
+            it = _clients.erase(it);
+        }
+        else
+            ++it;
+    }
+    for (std::vector<pollfd>::iterator it = pfds.begin(); it != pfds.end(); )
+    {
+        if (it->fd == fd)
+            it = pfds.erase(it);
+        else
+            ++it;
+    }
+	std::cout << "Client Removed (EOF)!" << std::endl;
 }
 
 Client *Server::getClientById(int fd)
@@ -84,6 +80,7 @@ Client *Server::getClientById(int fd)
 void Server::disconnectClient(int i)
 {
     int fd = pfds[i].fd;
+    close(fd);
     pfds.erase(pfds.begin() + i);
     Client* client = getClientById(fd);
     if (client)
@@ -94,12 +91,15 @@ void Server::disconnectClient(int i)
         {
             if (_channels[c].isMember(client))
             {
-                const std::vector<Client*> &members = _channels[c].getMembers();
+                std::vector<Client*> members = _channels[c].getMembers();
                 for (size_t j = 0; j < members.size(); j++)
                 {
                     if (members[j]->getFd() != fd)
+                    {
                         members[j]->sendMessage(quitMsg);
+                    }
                 }
+
             }
         }
         for (size_t c = 0; c < _channels.size(); c++)
@@ -107,6 +107,7 @@ void Server::disconnectClient(int i)
             _channels[c].removeClientEverywhere(client);
         }
     }
+
     for (size_t c = 0; c < _channels.size(); c++)
     {
         if (_channels[c].isEmpty())
@@ -115,18 +116,14 @@ void Server::disconnectClient(int i)
             c--;
         }
     }
-    bool deletedClient = false;
+
     for (size_t j = 0; j < _clients.size(); j++)
     {
         if (_clients[j]->getFd() == fd)
         {
             delete _clients[j];
             _clients.erase(_clients.begin() + j);
-            deletedClient = true;
             break;
         }
     }
-	std::cout << "Client is Disconnected!" << std::endl;
-    if (!deletedClient)
-        close(fd);
 }
