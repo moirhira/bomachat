@@ -1,0 +1,10 @@
+services:
+  bomachat:
+    build: .
+    container_name: bomachat
+    ports:
+      - "${BOMA_PORT:-6667}:${BOMA_PORT:-6667}"
+    environment:
+      - BOMA_PORT:${BOMA_PORT:-6667}
+      - BOMA_PASSWORD=${BOMA_PASSWORD:-changeme}
+    restart: unless-stopped
