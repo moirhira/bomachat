@@ -1,0 +1,25 @@
+FROM debian:bullseye-slim AS builder
+
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    make \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /build
+
+COPY . .
+
+RUN make all
+
+
+
+
+FROM debian-bullseye-slim AS runtime
+
+WORKDIR /app
+
+COPY --from=builder /build/bomachat .
+
+EXPOSE 6667
+
+CMD ["sh", "-c", "./bomachat ${BOMA_PORT} ${IRC_PASSWORD}"]

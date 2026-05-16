@@ -1,4 +1,4 @@
-NAME = ircserv
+NAME = bomachat
 SRC  = main.cpp \
 	server/Server.cpp \
 	server/Servertools.cpp \
