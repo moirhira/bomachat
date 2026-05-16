@@ -1,15 +1,15 @@
 services:
-  bomachat:
+  ircserv:
     build: .
-    container_name: bomachat
+    container_name: ft_irc
     ports:
-      - "${BOMA_PORT:-6667}:${BOMA_PORT:-6667}"
+      - "${BOMA_PORT}:${BOMA_PORT}"
     environment:
-      - BOMA_PORT:${BOMA_PORT:-6667}
+      - BOMA_PORT=${BOMA_PORT:-6667}
       - BOMA_PASSWORD=${BOMA_PASSWORD:-changeme}
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "sh", "-c", "echo PING | nc -w1 localhost ${IRC_PORT:-6667} || exit 1"]
+      test: ["CMD", "sh", "-c", "echo PING | nc -w1 localhost ${BOMA_PORT:-6667} || exit 1"]
       interval: 30s
       timeout: 5s
       retries: 3
