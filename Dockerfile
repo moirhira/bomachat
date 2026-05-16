@@ -9,16 +9,14 @@ WORKDIR /build
 
 COPY . .
 
-RUN make all
+RUN make -C src all
 
 
-
-
-FROM debian-bullseye-slim AS runtime
+FROM debian:bullseye-slim AS runtime
 
 WORKDIR /app
 
-COPY --from=builder /build/bomachat .
+COPY --from=builder build/src/bomachat .
 
 EXPOSE 6667
 
