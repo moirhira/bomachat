@@ -20,4 +20,4 @@ COPY --from=builder build/src/bomachat .
 
 EXPOSE 6667
 
-CMD ["sh", "-c", "./bomachat ${BOMA_PORT} ${IRC_PASSWORD}"]
+CMD ["sh", "-c", "./bomachat ${BOMA_PORT} ${BOMA_PASSWORD}"]
