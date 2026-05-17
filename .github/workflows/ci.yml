@@ -70,7 +70,7 @@ jobs:
         uses: docker/setup-buildx-actoin@v3
 
       - name: Build Docker image
-        uses: docker compose build
+        run: docker compose build
 
       - name: Start container 
         run : |
