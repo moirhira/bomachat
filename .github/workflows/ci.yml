@@ -23,7 +23,7 @@ jobs:
         run:  make -C src all
 
       - name: Binary exists check
-        run: test -f ./bomachat && echo "✅ Binary found" || (echo "❌ Binary missing" && exit 1)
+        run: test -f ./src/bomachat && echo "✅ Binary found" || (echo "❌ Binary missing" && exit 1)
 
   
   smoke-test:
@@ -42,7 +42,7 @@ jobs:
         run: make all
 
       - name: Start server in background
-        run: ./bomachat 6667 testpass &
+        run: ./src/bomachat 6667 testpass &
 
       - name: Wait for server to be ready
         run: sleep 2
@@ -54,7 +54,7 @@ jobs:
           (echo "❌ Server not responding" && exit 1)
 
       - name: Kill server
-        run: pkill bomachat || true
+        run: pkill ./src/bomachat || true
       
 
   docker-build:
@@ -67,7 +67,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-actoin@v3
+        uses: docker/setup-buildx-action@v3
 
       - name: Build Docker image
         run: docker compose build
