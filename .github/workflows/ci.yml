@@ -57,4 +57,33 @@ jobs:
         run: pkill bomachat || true
       
 
+  docker-build:
+    name: Docker Build
+    runs-on: ubuntu-latest
+    needs: build
 
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-actoin@v3
+
+      - name: Build Docker image
+        uses: docker compose build
+
+      - name: Start container 
+        run : |
+          BOMA_PORT=6667 BOMA_PASSWORD=testpass docker compose up -d
+      
+      - name: Wait for container
+        run: sleep 3
+      
+      - name: Check container is healthy 
+        run: | 
+          STATUS=$(docker compose ps --format json | python3 -c "import sys,json; data=sys.stdin.read(); rows=[json.loads(l) for l in data.strip().split('\n') if l]; print(rows[0].get('State','unknown'))")
+          echo "Container state: $STATUS"
+          [ "$STATUS" = "running" ] && echo "✅ Container running" || (echo "❌ Container not running" && exit 1)
+      
+      - name: Cleanup
+        run: docker compose down
