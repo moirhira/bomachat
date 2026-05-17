@@ -39,7 +39,7 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y build-essential make netcat-openbsd
 
       - name: Compile
-        run: make all
+        run: make -C src all
 
       - name: Start server in background
         run: ./src/bomachat 6667 testpass &
