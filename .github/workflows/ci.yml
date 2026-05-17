@@ -12,17 +12,49 @@ jobs:
     name: Build & Compile
     runs-on: ubuntu-latest
   
-  steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-    
-    - name: Install dependencies
-      run: sudo apt-get update && sudo apt-get install -y build-essential make netcat
-
-    - name: compile
-      run:  make -C src all
-
-    - name: Binary exists check
-      run: test -f ./bomachat && echo "✅ Binary found" || (echo "❌ Binary missing" && exit 1)
-
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
       
+      - name: Install dependencies
+        run: sudo apt-get update && sudo apt-get install -y build-essential make
+
+      - name: compile
+        run:  make -C src all
+
+      - name: Binary exists check
+        run: test -f ./bomachat && echo "✅ Binary found" || (echo "❌ Binary missing" && exit 1)
+
+  
+  smoke-test:
+    name: Smoke Test
+    runs-on: ubuntu-latest
+    needs: build
+
+    steps:
+      - name: Chekout code
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: sudo apt-get update && sudo apt-get install -y build-essential make netcat-openbsd
+
+      - name: Compile
+        run: make all
+
+      - name: Start server in background
+        run: ./bomachat 6667 testpass &
+
+      - name: Wait for server to be ready
+        run: sleep 2
+
+      - name: Test server accepts connections
+        run: |
+          echo "PASS testpass" | nc -w2 localhost 6667 && \
+          echo "✅ Server accepted connection" || \
+          (echo "❌ Server not responding" && exit 1)
+
+      - name: Kill server
+        run: pkill bomachat || true
+      
+
+
