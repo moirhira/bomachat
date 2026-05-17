@@ -70,11 +70,16 @@ jobs:
         uses: docker/setup-buildx-action@v3
 
       - name: Build Docker image
+        env:
+          BOMA_PORT: 6667
+          BOMA_PASSWORD: testpass
         run: docker compose build
 
-      - name: Start container 
-        run : |
-          BOMA_PORT=6667 BOMA_PASSWORD=testpass docker compose up -d
+      - name: Start container
+        env:
+          BOMA_PORT: 6667
+          BOMA_PASSWORD: testpass
+        run: docker compose up -d
       
       - name: Wait for container
         run: sleep 3
