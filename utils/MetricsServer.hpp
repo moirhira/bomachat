@@ -10,7 +10,7 @@
 
 
 class MetricsServer {
-    private:
+    public:
         MetricsServer(int port) : _port(port), _fd(-1) {}
 
         void start() {
@@ -19,7 +19,7 @@ class MetricsServer {
             pthread_detach(thread);
         }
 
-    public:
+    private:
         int _port;
         int _fd;
 

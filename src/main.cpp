@@ -1,5 +1,6 @@
 #include "server/Server.hpp"
 #include <signal.h>
+#include "../utils/MetricsServer.hpp"
 
 
 bool is_alldigit(std::string &s)
@@ -45,6 +46,10 @@ int main(int ac, char **av)
 	{
 		Server server(port, pass);
 		server.CreateServerSocket();
+		
+		MetricsServer metrics(9100);
+		metrics.start();
+		
 		server.run();
 	}
 	catch(const std::exception& e)
