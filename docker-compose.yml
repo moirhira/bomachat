@@ -1,7 +1,7 @@
 services:
-  ircserv:
+  bomachat:
     build: .
-    container_name: ft_irc
+    container_name: bomachat
     ports:
       - "${BOMA_PORT:-6667}:${BOMA_PORT:-6667}"
       - "9101:9101"
