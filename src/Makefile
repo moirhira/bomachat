@@ -45,4 +45,4 @@ fclean: clean
 
 re: fclean all bot
 
-.PHONY: all clean fclean re bot
+.PHONY: all clean fclean re

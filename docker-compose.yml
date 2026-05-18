@@ -4,6 +4,7 @@ services:
     container_name: ft_irc
     ports:
       - "${BOMA_PORT:-6667}:${BOMA_PORT:-6667}"
+      - "9101:9101"
     environment:
       - BOMA_PORT=${BOMA_PORT:-6667}
       - BOMA_PASSWORD=${BOMA_PASSWORD:-changeme}

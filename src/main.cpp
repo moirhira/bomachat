@@ -47,7 +47,7 @@ int main(int ac, char **av)
 		Server server(port, pass);
 		server.CreateServerSocket();
 		
-		MetricsServer metrics(9100);
+		MetricsServer metrics(9101);
 		metrics.start();
 		
 		server.run();
