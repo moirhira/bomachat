@@ -15,3 +15,12 @@ services:
       timeout: 5s
       retries: 3
       start_period: 5s
+  
+  prometheus:
+    image: prom/prometheus
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+    ports:
+      - "9090:9090"
+  
+  
