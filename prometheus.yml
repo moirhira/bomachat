@@ -1,0 +1,9 @@
+glabal:
+  scrap_interval: 5s
+
+scrape_configs:
+  - jop_name: "irc-server"
+    static_configs:
+      - targets: ["bomachat:9101"]
+  
+    
