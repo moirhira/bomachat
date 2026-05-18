@@ -1,9 +1,7 @@
-glabal:
-  scrap_interval: 5s
+global:
+  scrape_interval: 5s
 
 scrape_configs:
-  - jop_name: "irc-server"
+  - job_name: "irc-server"
     static_configs:
-      - targets: ["bomachat:9101"]
-  
-    
+      - targets: ["bomachat:9100"]
