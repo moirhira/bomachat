@@ -20,14 +20,14 @@ SRC  = main.cpp \
 
 OBJ = $(SRC:.cpp=.o)
 CXX = c++
-CXXFLAGS = -Wall -Wextra -Werror -std=c++98 -Iserver -Icommands -Iutils
+CXXFLAGS = -Wall -Wextra -Werror -std=c++98 -Iserver -Icommands -Iutils -lpthread
 
 
 all: $(NAME)
 
 
 $(NAME): $(OBJ)
-	$(CXX) $(CXXFLAGS) $(OBJ) -o $(NAME)
+	$(CXX) $(CXXFLAGS) $(OBJ) -o $(NAME) 
 
 %.o: %.cpp
 	$(CXX) $(CXXFLAGS) -c $< -o $@

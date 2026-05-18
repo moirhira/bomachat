@@ -1,5 +1,7 @@
 #include "ServerCommands.hpp"
 #include "Server.hpp"
+#include "../../utils/Metrics.hpp"
+
 
 
 static Channel *findChannel(std::vector<Channel> &channels, const std::string &name)
@@ -46,4 +48,5 @@ void handlePrivmsg(Client *client, std::vector<std::string> params,
     if (!dest)
         return sendReply(client, "401", "No such nick/channel", target);
     dest->sendMessage(fullMsg);
+    Metrics::instance().incrementMessages();
 }

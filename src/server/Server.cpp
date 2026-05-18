@@ -1,4 +1,5 @@
 #include "Server.hpp"
+#include "../../utils/Metrics.hpp"
 #include "../commands/ServerCommands.hpp"
 
 volatile sig_atomic_t running = 1;
@@ -85,6 +86,8 @@ void Server::run()
 	signal(SIGQUIT, signalhandler);
 	while (running)
 	{
+		Metrics::instance().setClient(_clients.size());
+		Metrics::instance().setChannels(_channels.size());
 		ret = poll(&(this->pfds[0]), this->pfds.size(), 3000);
 		if (ret < 0)
 		{

@@ -1,5 +1,6 @@
 #include "Server.hpp"
 #include "Client.hpp"
+#include "../../utils/Metrics.hpp"
 
 
 void Server::CreateServerSocket()
@@ -40,6 +41,7 @@ void Server::Accept_client()
 	client_pfd.revents = 0;
 	this->pfds.push_back(client_pfd);
 	std::cout << "New Client Accepted" << std::endl;
+    Metrics::instance().incrementConnections();
 	fcntl(client_fd, F_SETFL, O_NONBLOCK);
 }
 
