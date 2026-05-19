@@ -26,8 +26,8 @@ jobs:
         run: test -f ./src/bomachat && echo "✅ Binary found" || (echo "❌ Binary missing" && exit 1)
 
   
-  smoke-test:
-    name: Smoke Test
+  test:
+    name: Test
     runs-on: ubuntu-latest
     needs: build
 
