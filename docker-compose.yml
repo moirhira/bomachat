@@ -5,6 +5,8 @@ services:
     ports:
       - "${BOMA_PORT:-6667}:${BOMA_PORT:-6667}"
       - "9101:9101"
+    networks:
+      - monitoring
     environment:
       - BOMA_PORT=${BOMA_PORT:-6667}
       - BOMA_PASSWORD=${BOMA_PASSWORD:-changeme}
@@ -27,7 +29,7 @@ services:
     restart: unless-stopped
     depends_on:
       - bomachat
-    network:
+    networks:
       - monitoring
 
   grafana:
@@ -44,16 +46,16 @@ services:
     depends_on:
       - prometheus
     restart: unless-stopped
-    network:
+    networks:
       - monitoring
 
   node_exporter:
     image: prom/node-exporter:latest
     container_name: node_exporter
     ports:
-      - "9100:9100"
+      - "9102:9102"
     restart: unless-stopped
-    network:
+    networks:
       - monitoring
 
 
@@ -63,5 +65,5 @@ volumes:
 
 networks:
   monitoring:
-  
-  
+    driver: bridge
+
