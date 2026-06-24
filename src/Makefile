@@ -1,4 +1,4 @@
-NAME = bomachat
+NAME = nodetalk
 SRC  = main.cpp \
 	server/Server.cpp \
 	server/Servertools.cpp \

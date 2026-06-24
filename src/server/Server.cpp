@@ -75,6 +75,7 @@ void signalhandler(int sig)
 	running = 0;
 }
 
+
 void Server::run()
 {
 	struct pollfd server_pfd;

@@ -17,8 +17,8 @@ FROM debian:bullseye-slim AS runtime
 
 WORKDIR /app
 
-COPY --from=builder build/src/bomachat .
+COPY --from=builder build/src/nodetalk .
 
 EXPOSE 6667
 
-CMD ["sh", "-c", "./bomachat ${BOMA_PORT} ${BOMA_PASSWORD}"]
+CMD ["sh", "-c", "./nodetalk ${BOMA_PORT} ${BOMA_PASSWORD}"]
